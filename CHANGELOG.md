@@ -22,6 +22,10 @@ All notable changes to this project are documented in this file. The format foll
   `sendBeacon`, falling back to a keepalive `fetch`. The body is sent as
   `text/plain;charset=UTF-8`, so the endpoint must parse it whatever the content type. Failures
   are swallowed.
+- The Astro integration, the default export of `@edgesweden/consent/astro`:
+  `consent({ config: "./src/consent.config.ts" })` loads the config module's default export at
+  build time, fails the build on any validation error, logs warnings, and adds the stylesheet and
+  one page script that calls `mount` to every page. Astro >= 5.4 is an optional peer dependency.
 
 ### Changed
 
