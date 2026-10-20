@@ -39,7 +39,7 @@ Default cookie name `consent`.
    keys are additive within a major version. No runtime fetch of config.
 5. **No framework in the core.** `mount(config)` on a `Document`; the Astro integration only bundles
    the config and injects one script.
-6. **Small.** Core + stylesheet ≤ 6 KB gzipped; the Consent Mode and gating adapters are separate
+6. **Small.** Core + stylesheet ≤ 7 KB gzipped (decision #34); the Consent Mode and gating adapters are separate
    entry points so a site pays only for what it imports.
 7. **Accessible by default.** WCAG 2.1 AA: dialog semantics, focus management, keyboard-complete,
    reduced-motion aware, visible focus. Colour contrast is a config responsibility; the integration
@@ -455,7 +455,7 @@ Measured on the built ESM after gzip, enforced in CI with `size-limit`:
 
 | Entry                       | Budget       |
 | --------------------------- | ------------ |
-| `.` (core incl. stylesheet) | 6 KB         |
+| `.` (core incl. stylesheet) | 7 KB         |
 | `./gate` (v0.2)             | 1 KB         |
 | `./gtag` (v0.2)             | 1 KB         |
 | `./astro` (build-time only) | not budgeted |

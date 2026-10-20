@@ -1,13 +1,24 @@
 {
   "name": "@edgesweden/consent",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Config-driven cookie-consent banner for static and server-rendered sites",
+  "keywords": [
+    "cookie",
+    "consent",
+    "gdpr",
+    "cookie-banner",
+    "astro",
+    "astro-integration",
+    "csp"
+  ],
   "license": "MIT",
   "author": "Harvedge",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EdgeSweden/consent.git"
   },
+  "homepage": "https://github.com/EdgeSweden/consent#readme",
+  "bugs": "https://github.com/EdgeSweden/consent/issues",
   "type": "module",
   "sideEffects": [
     "*.css"
