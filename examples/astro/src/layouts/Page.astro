@@ -1,0 +1,55 @@
+---
+// Shared page chrome: language switch, the reopen control and withdraw() in the footer, and the
+// live consent state and record list that the demo exists to show (plan: Demo).
+import { pageStrings, type PageId } from "../strings.js";
+
+interface Props {
+  lang: "en" | "sv";
+  page: PageId;
+}
+
+const { lang, page } = Astro.props;
+const t = pageStrings[lang];
+const { title, body } = t.pages[page];
+---
+
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href={t.pages.home.path}>{t.pages.home.title}</a>
+        <a href={t.pages.about.path}>{t.pages.about.title}</a>
+        <a href={t.otherLanguage.href} hreflang={t.otherLanguage.lang} lang={t.otherLanguage.lang}
+          >{t.otherLanguage.label}</a
+        >
+      </nav>
+    </header>
+    <main>
+      <h1>{title}</h1>
+      <p>{body}</p>
+      <h2>{t.state}</h2>
+      <pre id="consent-state"></pre>
+      <h2>{t.records}</h2>
+      <ol id="consent-records"></ol>
+    </main>
+    <footer>
+      <button type="button" data-consent="open">{t.cookieSettings}</button>
+      <button type="button" id="withdraw">{t.withdraw}</button>
+      <a href={t.pages.privacy.path}>{t.pages.privacy.title}</a>
+    </footer>
+    <script>
+      import { onConsent, withdraw } from "@edgesweden/consent";
+
+      document.getElementById("withdraw")?.addEventListener("click", () => withdraw());
+      onConsent((state) => {
+        const out = document.getElementById("consent-state");
+        if (out) out.textContent = JSON.stringify(state, null, 2);
+      });
+    </script>
+  </body>
+</html>
