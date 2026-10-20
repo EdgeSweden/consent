@@ -21,7 +21,7 @@ Default cookie name `consent`.
 
 1. **Nothing optional before a choice.** The package sets no cookie, touches no storage and makes
    no request of its own until the visitor presses a button; reading the existing consent cookie is
-   the only pre-choice I/O. Services in a *required* category are the one exception by definition:
+   the only pre-choice I/O. Services in a _required_ category are the one exception by definition:
    they are granted from mount, so a gated required script runs and a required Consent Mode key
    starts `granted` before any choice. Optional services never do.
 2. **Reject is as easy as accept.** The first layer always shows Accept all and Reject all with equal
@@ -197,12 +197,12 @@ closes.
 
 The `action` reported to the recorder is derived from the transition, not from the button pressed:
 
-| Action | Condition |
-| --- | --- |
-| `accept_all` | every optional category ends granted |
-| `reject_all` | every optional category ends denied and none was granted before |
-| `withdraw` | every optional category ends denied and at least one was granted before |
-| `custom` | any other mix |
+| Action       | Condition                                                               |
+| ------------ | ----------------------------------------------------------------------- |
+| `accept_all` | every optional category ends granted                                    |
+| `reject_all` | every optional category ends denied and none was granted before         |
+| `withdraw`   | every optional category ends denied and at least one was granted before |
+| `custom`     | any other mix                                                           |
 
 "Before" means the valid stored choice, if any. With no valid stored choice (first visit, stale
 policy or changed category set) every control is a first decision and is always written and
@@ -453,11 +453,11 @@ exceeded. The demo build is uploaded as an artifact.
 
 Measured on the built ESM after gzip, enforced in CI with `size-limit`:
 
-| Entry | Budget |
-| --- | --- |
-| `.` (core incl. stylesheet) | 6 KB |
-| `./gate` (v0.2) | 1 KB |
-| `./gtag` (v0.2) | 1 KB |
+| Entry                       | Budget       |
+| --------------------------- | ------------ |
+| `.` (core incl. stylesheet) | 6 KB         |
+| `./gate` (v0.2)             | 1 KB         |
+| `./gtag` (v0.2)             | 1 KB         |
 | `./astro` (build-time only) | not budgeted |
 
 The budget is part of the public contract: raising it is a CHANGELOG entry.

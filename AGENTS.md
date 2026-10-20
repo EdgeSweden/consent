@@ -30,16 +30,16 @@ documentation fix. Do not pick one silently.
 Checks are referred to by name here, in CI and in review. The names are fixed; the commands are
 `package.json` scripts, wired in Phase 0.
 
-| Name | Command | Runs |
-|---|---|---|
-| `check:types` | `pnpm type-check` | `tsc --noEmit` over `src`, `test` and `examples` |
-| `check:lint` | `pnpm lint` | eslint, including rules that ban the DOM and style APIs listed under CSP in the plan |
-| `check:format` | `pnpm format:check` | `prettier --check .` |
-| `check:test` | `pnpm test` | `vitest run` |
-| `check:deps` | `pnpm audit --prod --audit-level=high` | known vulnerabilities in runtime dependencies |
-| `check:build` | `pnpm build` | `tsup`, emits `dist/` |
-| `check:size` | `pnpm size` | `size-limit` against the budgets in the plan |
-| `check:e2e` | `pnpm test:e2e` | Playwright + axe against the built demo |
+| Name           | Command                                | Runs                                                                                 |
+| -------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| `check:types`  | `pnpm type-check`                      | `tsc --noEmit` over `src`, `test` and `examples`                                     |
+| `check:lint`   | `pnpm lint`                            | eslint, including rules that ban the DOM and style APIs listed under CSP in the plan |
+| `check:format` | `pnpm format:check`                    | `prettier --check .`                                                                 |
+| `check:test`   | `pnpm test`                            | `vitest run`                                                                         |
+| `check:deps`   | `pnpm audit --prod --audit-level=high` | known vulnerabilities in runtime dependencies                                        |
+| `check:build`  | `pnpm build`                           | `tsup`, emits `dist/`                                                                |
+| `check:size`   | `pnpm size`                            | `size-limit` against the budgets in the plan                                         |
+| `check:e2e`    | `pnpm test:e2e`                        | Playwright + axe against the built demo                                              |
 
 Run the relevant subset while working. Run everything before asking for review and list the
 results in the pull request. If a check could not be run locally, say so in the pull request; CI

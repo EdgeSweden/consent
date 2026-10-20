@@ -13,7 +13,7 @@ Tier in parentheses. One `[~]` at a time.
 
 ## Phase 0
 
-- [ ] (B) P0 - Repository tooling: package.json, tsup, vitest, eslint, prettier, size-limit, Playwright; CI green on an empty package (plan: Repository layout, CI)
+- [x] (A) P0 - Repository tooling: package.json, tsup, vitest, eslint, prettier, size-limit, Playwright; CI green on an empty package (plan: Repository layout, CI)
 
 ## Phase 1: core + Astro integration, v0.1.0
 

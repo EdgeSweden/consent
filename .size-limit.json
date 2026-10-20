@@ -1,0 +1,8 @@
+[
+  {
+    "name": "core incl. stylesheet",
+    "path": ["dist/index.js", "dist/styles.css"],
+    "limit": "6 KB",
+    "gzip": true
+  }
+]

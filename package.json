@@ -1,0 +1,61 @@
+{
+  "name": "@edgesweden/consent",
+  "version": "0.0.0",
+  "description": "Config-driven cookie-consent banner for static and server-rendered sites",
+  "license": "MIT",
+  "author": "Harvedge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EdgeSweden/consent.git"
+  },
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "size": "size-limit",
+    "demo:build": "echo \"no demo yet: examples/astro lands in P1.7\"",
+    "test:e2e": "playwright test --pass-with-no-tests"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@size-limit/file": "^14.2.0",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.13.0",
+    "globals": "^17.13.0",
+    "happy-dom": "^21.0.3",
+    "prettier": "^3.9.10",
+    "size-limit": "^14.2.0",
+    "tsup": "^9.0.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
