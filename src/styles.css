@@ -1,1 +1,295 @@
-/* Banner and settings dialog styles arrive with P1.3. */
+/* @edgesweden/consent. Every value is a --consent-* custom property on .consent-root, so a theme
+   can override it with style.setProperty (plan: CSP). Colour defaults match DEFAULT_COLORS
+   (decision #9). Class names are not a public contract (decision #25). */
+
+.consent-root {
+  --consent-background: #ffffff;
+  --consent-text: #1a1a1a;
+  --consent-muted: #595959;
+  --consent-link: #0b57d0;
+  --consent-border: #d0d0d0;
+  --consent-backdrop: rgba(0, 0, 0, 0.5);
+  --consent-focus: #0b57d0;
+  --consent-accept-background: #1a1a1a;
+  --consent-accept-text: #ffffff;
+  --consent-reject-background: #1a1a1a;
+  --consent-reject-text: #ffffff;
+  --consent-settings-background: #ffffff;
+  --consent-settings-text: #1a1a1a;
+  --consent-save-background: #1a1a1a;
+  --consent-save-text: #ffffff;
+  --consent-toggle-on: #1a1a1a;
+  --consent-toggle-off: #767676;
+  --consent-toggle-knob: #ffffff;
+  --consent-radius-box: 0.75rem;
+  --consent-radius-button: 0.5rem;
+  --consent-radius-control: 999px;
+  --consent-font: inherit;
+  --consent-z-index: 2147483000;
+  --consent-width: min(28rem, calc(100vw - 2rem));
+  --consent-settings-width: min(36rem, calc(100vw - 2rem));
+  --consent-gap: 1rem;
+  --consent-duration: 150ms;
+
+  position: fixed;
+  inset: 0;
+  z-index: var(--consent-z-index);
+  pointer-events: none;
+  font-family: var(--consent-font);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.consent-root [hidden] {
+  display: none !important;
+}
+
+.consent-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--consent-backdrop);
+  animation: consent-fade var(--consent-duration) ease-out;
+}
+
+.consent-root[data-modal] .consent-backdrop {
+  pointer-events: auto;
+}
+
+.consent-banner,
+.consent-settings {
+  position: fixed;
+  box-sizing: border-box;
+  max-height: calc(100vh - 2 * var(--consent-gap));
+  overflow: auto;
+  padding: 1.25rem;
+  color: var(--consent-text);
+  background: var(--consent-background);
+  border: 1px solid var(--consent-border);
+  border-radius: var(--consent-radius-box);
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  animation: consent-rise var(--consent-duration) ease-out;
+}
+
+.consent-banner {
+  width: var(--consent-width);
+}
+
+.consent-settings {
+  top: 50%;
+  left: 50%;
+  width: var(--consent-settings-width);
+  transform: translate(-50%, -50%);
+  animation-name: consent-fade;
+}
+
+/* Positions (plan: Config, layout.position). */
+.consent-root[data-position^="bottom"] .consent-banner {
+  bottom: var(--consent-gap);
+}
+.consent-root[data-position^="top"] .consent-banner {
+  top: var(--consent-gap);
+}
+.consent-root[data-position$="left"] .consent-banner {
+  left: var(--consent-gap);
+}
+.consent-root[data-position$="right"] .consent-banner {
+  right: var(--consent-gap);
+}
+.consent-root[data-position$="-center"] .consent-banner {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.consent-root[data-position="center"] .consent-banner {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-name: consent-fade;
+}
+
+.consent-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.consent-description,
+.consent-category-description,
+.consent-service-description {
+  margin: 0 0 1rem;
+  color: var(--consent-muted);
+}
+
+.consent-root a {
+  color: var(--consent-link);
+}
+
+.consent-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--consent-gap);
+}
+
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Accept all and Reject all share size and weight: equal prominence (plan: Principles, 2). */
+.consent-actions .consent-button {
+  flex: 1 1 auto;
+}
+
+.consent-button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid var(--consent-border);
+  border-radius: var(--consent-radius-button);
+  cursor: pointer;
+}
+
+.consent-accept {
+  color: var(--consent-accept-text);
+  background: var(--consent-accept-background);
+}
+.consent-reject {
+  color: var(--consent-reject-text);
+  background: var(--consent-reject-background);
+}
+.consent-preferences,
+.consent-close {
+  color: var(--consent-settings-text);
+  background: var(--consent-settings-background);
+}
+.consent-save {
+  color: var(--consent-save-text);
+  background: var(--consent-save-background);
+}
+
+.consent-banner > .consent-close {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.consent-categories,
+.consent-services {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.consent-category {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--consent-border);
+}
+
+.consent-category:last-child {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--consent-border);
+}
+
+.consent-category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.consent-category-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.consent-category-description {
+  margin: 0.25rem 0 0;
+}
+
+.consent-always {
+  font-size: 0.875rem;
+  color: var(--consent-muted);
+}
+
+.consent-services {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.consent-service-name {
+  font-weight: 600;
+}
+
+.consent-service-description {
+  display: block;
+  margin: 0;
+}
+
+/* Native checkbox styled as a switch (plan: Accessibility). */
+.consent-toggle {
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  height: 1.5rem;
+  margin: 0;
+  appearance: none;
+  background: var(--consent-toggle-off);
+  border-radius: var(--consent-radius-control);
+  cursor: pointer;
+  transition: background-color var(--consent-duration);
+}
+
+.consent-toggle::before {
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  content: "";
+  background: var(--consent-toggle-knob);
+  border-radius: var(--consent-radius-control);
+  transition: transform var(--consent-duration);
+}
+
+.consent-toggle:checked {
+  background: var(--consent-toggle-on);
+}
+
+.consent-toggle:checked::before {
+  transform: translateX(1.25rem);
+}
+
+.consent-toggle:disabled {
+  cursor: not-allowed;
+}
+
+/* The focus ring is never removed (plan: Accessibility). */
+.consent-root :focus-visible,
+.consent-banner:focus,
+.consent-settings:focus {
+  outline: 2px solid var(--consent-focus);
+  outline-offset: 2px;
+}
+
+@keyframes consent-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes consent-rise {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consent-root,
+  .consent-root *,
+  .consent-root *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
