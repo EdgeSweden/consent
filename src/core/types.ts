@@ -12,3 +12,15 @@ export interface ConsentRecord {
 }
 
 export type ConsentRecorder = (record: ConsentRecord) => void | Promise<void>;
+
+export type ConsentAction = ConsentRecord["action"];
+
+/** What `getConsent()`, `onConsent` and `consent:change` report (plan: State API). */
+export interface ConsentState {
+  /** Every configured category; required categories are always `true`. */
+  categories: Record<string, boolean>;
+  policyVersion: string;
+  locale: string;
+  /** Unix seconds of the stored choice, or `null` when no valid choice exists. */
+  at: number | null;
+}
