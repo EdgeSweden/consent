@@ -97,7 +97,7 @@ Keep these separate even when one person supervises everything.
 - **Maintainer** (the repository owner): approves Tier A plans, resolves durable decisions,
   merges and tags.
 - **Implementer**: builds one package, runs the checks, writes the pull request. Does not declare
-  the package done and does not approve the review.
+  the package done, does not start or approve the review and does not mark a row `[x]`.
 - **Reviewer**: reviews from a code-review stance and performs the handoff below.
 
 ## Review
@@ -106,6 +106,10 @@ Review is required before any package merges.
 
 **Hard invariant: the review runs in a session, agent or person that did not write the code.**
 An implementer reviewing their own work is not a review.
+
+The maintainer starts every review and re-review, in a separate session or window. An
+implementer never launches, forks or messages a reviewer itself, and a review it initiates does
+not count. The implementer stops at the open pull request and says it is ready for review.
 
 Findings lead the review, ordered by severity:
 
@@ -215,6 +219,7 @@ Everything here is public and written for a stranger.
 4. Run the relevant checks while working; run all of them before review.
 5. Open the pull request from the template with the evidence filled in. Update `CHANGELOG.md`
    under `Unreleased` for anything user-visible.
-6. Independent review. Fix P1/P2 findings; get targeted re-review.
+6. The maintainer starts the independent review in a separate session. The implementer fixes
+   P1/P2 findings; the maintainer starts the targeted re-review.
 7. The reviewer marks `[x]` and proposes the commit subject.
 8. The maintainer squash-merges with that subject.
