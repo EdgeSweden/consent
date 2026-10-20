@@ -1,10 +1,10 @@
 // validateConfig (plan: Validation; decision #10). The schema checks shape and per-key rules; the
-// checks here span several top-level keys and run once the shape is valid.
+// checks here span several top-level keys and run on every part of the input that is valid.
 
 import type { z } from "zod";
 import { contrastRatio, parseColor } from "./colors.js";
-import { CONTRAST_PAIRS, DEFAULT_COLORS, MIN_CONTRAST } from "./defaults.js";
-import { consentConfigSchema, type ConsentConfig } from "./schema.js";
+import { CONTRAST_PAIRS, DEFAULT_COLORS, MIN_CONTRAST, THEME_COLORS } from "./defaults.js";
+import { consentConfigSchema, type ConsentConfig, type ThemeColor } from "./schema.js";
 
 export interface ValidationIssue {
   /** The offending key, e.g. `categories[1].id` or `locales.sv.categories`. */
@@ -46,32 +46,94 @@ function fromZod(issue: z.core.$ZodIssue): ValidationIssue[] {
   return [{ path: formatPath(issue.path), message: issue.message }];
 }
 
-/** Every category and service has strings in every locale, and no string key is a stray. */
-function checkLocales(config: ConsentConfig, errors: ValidationIssue[]): void {
-  if (!Object.hasOwn(config.locales, config.defaultLocale)) {
-    errors.push({
-      path: "defaultLocale",
-      message: `"${config.defaultLocale}" is not a key of locales.`,
-    });
-  }
-  const categoryIds = config.categories.map((c) => c.id);
-  const serviceIds = config.categories.flatMap((c) => c.services?.map((s) => s.id) ?? []);
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 
-  for (const [locale, strings] of Object.entries(config.locales)) {
+/**
+ * The parts of the input the cross-key checks need, each kept only when it is valid on its own, so
+ * those checks still run next to unrelated schema errors (decision #10).
+ */
+interface Parts {
+  defaultLocale: string | undefined;
+  localeKeys: string[] | undefined;
+  /** Declared category and service ids, or undefined when `categories` is not an array. */
+  ids: { categories: string[]; services: string[] } | undefined;
+  /** Per locale, the string keys of `categories` and `services`, or undefined when not an object. */
+  locales: Array<{ locale: string; categories?: string[]; services?: string[] }>;
+  /** The valid config colours; an invalid one is left at its default and reported by the schema. */
+  colors: Partial<Record<ThemeColor, string>>;
+  strictContrast: boolean;
+}
+
+function parts(input: unknown): Parts {
+  const raw = isObject(input) ? input : {};
+  const theme = isObject(raw["theme"]) ? raw["theme"] : {};
+  const validation = isObject(raw["validation"]) ? raw["validation"] : {};
+  const locales = isObject(raw["locales"]) ? raw["locales"] : undefined;
+  const colors = isObject(theme["colors"]) ? theme["colors"] : {};
+  const categories = Array.isArray(raw["categories"])
+    ? raw["categories"].filter(isObject)
+    : undefined;
+  const idOf = (v: unknown) => (isObject(v) && typeof v["id"] === "string" ? [v["id"]] : []);
+  return {
+    defaultLocale: typeof raw["defaultLocale"] === "string" ? raw["defaultLocale"] : undefined,
+    localeKeys: locales && Object.keys(locales),
+    // Ids only, so unrelated errors in a category do not hide the locale checks.
+    ids: categories && {
+      categories: categories.flatMap(idOf),
+      services: categories.flatMap((c) =>
+        Array.isArray(c["services"]) ? c["services"].flatMap(idOf) : [],
+      ),
+    },
+    // Only the keys matter here, so unrelated errors elsewhere in a locale do not hide these checks.
+    locales: Object.entries(locales ?? {}).map(([locale, value]) => {
+      const strings = isObject(value) ? value : {};
+      const services = strings["services"] ?? {};
+      return {
+        locale,
+        ...(isObject(strings["categories"]) && { categories: Object.keys(strings["categories"]) }),
+        ...(isObject(services) && { services: Object.keys(services) }),
+      };
+    }),
+    colors: Object.fromEntries(
+      THEME_COLORS.flatMap((token) => {
+        const value = colors[token];
+        return typeof value === "string" && parseColor(value) !== null ? [[token, value]] : [];
+      }),
+    ),
+    strictContrast: validation["strictContrast"] === true,
+  };
+}
+
+/** Every category and service has strings in every locale, and no string key is a stray. */
+function checkLocales(p: Parts, errors: ValidationIssue[]): void {
+  if (p.defaultLocale !== undefined && p.localeKeys !== undefined) {
+    if (!p.localeKeys.includes(p.defaultLocale)) {
+      errors.push({
+        path: "defaultLocale",
+        message: `"${p.defaultLocale}" is not a key of locales.`,
+      });
+    }
+  }
+  if (p.ids === undefined) return;
+  const { categories: categoryIds, services: serviceIds } = p.ids;
+
+  for (const { locale, ...keys } of p.locales) {
     const sections = [
-      ["categories", "category", categoryIds, strings.categories],
-      ["services", "service", serviceIds, strings.services ?? {}],
+      ["categories", "category", categoryIds, keys.categories],
+      ["services", "service", serviceIds, keys.services],
     ] as const;
-    for (const [key, noun, ids, entries] of sections) {
+    for (const [key, noun, ids, present] of sections) {
+      if (present === undefined) continue; // not an object; the schema reports it
       for (const id of ids) {
-        if (!Object.hasOwn(entries, id)) {
+        if (!present.includes(id)) {
           errors.push({
             path: `locales.${locale}.${key}`,
             message: `Missing strings for ${noun} "${id}".`,
           });
         }
       }
-      for (const id of Object.keys(entries)) {
+      for (const id of present) {
         if (!ids.includes(id)) {
           errors.push({
             path: `locales.${locale}.${key}.${id}`,
@@ -84,19 +146,15 @@ function checkLocales(config: ConsentConfig, errors: ValidationIssue[]): void {
 }
 
 /** Contrast of the checked pairs, with config colours merged over the defaults (decision #9). */
-function checkContrast(
-  config: ConsentConfig,
-  errors: ValidationIssue[],
-  warnings: ValidationIssue[],
-): void {
-  const colors = { ...DEFAULT_COLORS, ...config.theme?.colors };
-  const failures = config.validation?.strictContrast === true ? errors : warnings;
+function checkContrast(p: Parts, errors: ValidationIssue[], warnings: ValidationIssue[]): void {
+  const colors = { ...DEFAULT_COLORS, ...p.colors };
+  const failures = p.strictContrast ? errors : warnings;
 
   for (const [fg, bg] of CONTRAST_PAIRS) {
     const path = `theme.colors.${fg}`;
     const fgColor = parseColor(colors[fg] ?? DEFAULT_COLORS[fg]);
     const bgColor = parseColor(colors[bg] ?? DEFAULT_COLORS[bg]);
-    if (fgColor === null || bgColor === null) continue; // the schema has already reported it
+    if (fgColor === null || bgColor === null) continue; // unreachable: only valid colours remain
     if (fgColor.a < 1 || bgColor.a < 1) {
       warnings.push({
         path,
@@ -117,15 +175,12 @@ function checkContrast(
 /** Validates a config object against schema version 1. Collects every error, not just the first. */
 export function validateConfig(input: unknown): ValidationResult {
   const parsed = consentConfigSchema.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, errors: parsed.error.issues.flatMap(fromZod), warnings: [] };
-  }
-  const config = parsed.data;
-  const errors: ValidationIssue[] = [];
+  const errors = parsed.success ? [] : parsed.error.issues.flatMap(fromZod);
   const warnings: ValidationIssue[] = [];
-  checkLocales(config, errors);
-  checkContrast(config, errors, warnings);
-  return errors.length === 0
-    ? { ok: true, config, errors: [], warnings }
+  const p = parts(input);
+  checkLocales(p, errors);
+  checkContrast(p, errors, warnings);
+  return parsed.success && errors.length === 0
+    ? { ok: true, config: parsed.data, errors: [], warnings }
     : { ok: false, errors, warnings };
 }

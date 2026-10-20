@@ -16,6 +16,15 @@ const VAR_NAME = /^--consent-[A-Za-z0-9_-]+$/;
 const LINK_TOKEN = /\{link:([^}]*)\}/g;
 
 const BUTTONS = ["acceptAll", "rejectAll", "settings"] as const;
+
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+
+// Group rules run even when a sibling field has an error, so every error is collected
+// (decision #10). They therefore read their input as unknown and check each field they use.
+const always = { when: (payload: { value: unknown }) => isObject(payload.value) };
+const alwaysArray = { when: (payload: { value: unknown }) => Array.isArray(payload.value) };
 const COLOR_PROPERTIES = new Set(THEME_COLORS.map(colorProperty));
 
 /** `/path`, but not the scheme-relative `//host` or `/\host` that browsers treat alike. */
@@ -67,37 +76,40 @@ const category = z.strictObject({
   services: z.array(service).optional(),
 });
 
-const categories = z.array(category).superRefine((list, ctx) => {
-  const categoryIds = new Set<string>();
-  const serviceIds = new Set<string>();
-  list.forEach((c, i) => {
-    if (categoryIds.has(c.id)) {
+const categories = z.array(category).superRefine((input: unknown[], ctx) => {
+  const list = input.filter(isObject);
+  const categoryIds = new Set<unknown>();
+  const serviceIds = new Set<unknown>();
+  input.forEach((c, i) => {
+    if (!isObject(c)) return;
+    if (typeof c["id"] === "string" && categoryIds.has(c["id"])) {
       ctx.addIssue({
         code: "custom",
         path: [i, "id"],
-        message: `Duplicate category id "${c.id}".`,
+        message: `Duplicate category id "${String(c["id"])}".`,
       });
     }
-    categoryIds.add(c.id);
-    c.services?.forEach((s, j) => {
-      if (serviceIds.has(s.id)) {
+    categoryIds.add(c["id"]);
+    asArray(c["services"]).forEach((s, j) => {
+      if (!isObject(s) || typeof s["id"] !== "string") return;
+      if (serviceIds.has(s["id"])) {
         ctx.addIssue({
           code: "custom",
           path: [i, "services", j, "id"],
-          message: `Duplicate service id "${s.id}"; service ids are unique across all categories.`,
+          message: `Duplicate service id "${s["id"]}"; service ids are unique across all categories.`,
         });
       }
-      serviceIds.add(s.id);
+      serviceIds.add(s["id"]);
     });
   });
-  if (!list.some((c) => c.required !== true)) {
+  if (!list.some((c) => c["required"] !== true)) {
     ctx.addIssue({
       code: "custom",
       message:
         "At least one optional (non-required) category is needed; otherwise there is nothing to consent to.",
     });
   }
-});
+}, alwaysArray);
 
 const link = z.strictObject({
   id: nonEmpty,
@@ -126,10 +138,12 @@ const localeStrings = z
       .record(z.string(), z.strictObject({ name: z.string(), description: z.string().optional() }))
       .optional(),
   })
-  .superRefine((strings, ctx) => {
-    const linkIds = new Set(strings.links?.map((l) => l.id));
+  .superRefine((strings: Record<string, unknown>, ctx) => {
+    const linkIds = new Set(asArray(strings["links"]).map((l) => (isObject(l) ? l["id"] : l)));
     for (const key of ["description", "settingsDescription"] as const) {
-      for (const [, id = ""] of (strings[key] ?? "").matchAll(LINK_TOKEN)) {
+      const text = strings[key];
+      if (typeof text !== "string") continue;
+      for (const [, id = ""] of text.matchAll(LINK_TOKEN)) {
         if (!linkIds.has(id)) {
           ctx.addIssue({
             code: "custom",
@@ -139,7 +153,7 @@ const localeStrings = z
         }
       }
     }
-  });
+  }, always);
 
 const layout = z
   .strictObject({
@@ -159,8 +173,8 @@ const layout = z
     width: nonEmpty.optional(),
     settingsPosition: z.literal("center").optional(),
   })
-  .superRefine((l, ctx) => {
-    if ((l.blocking ?? true) && (l.backdrop ?? "dim") !== "dim") {
+  .superRefine((l: Record<string, unknown>, ctx) => {
+    if ((l["blocking"] ?? true) === true && l["backdrop"] === "none") {
       ctx.addIssue({
         code: "custom",
         path: ["blocking"],
@@ -168,7 +182,7 @@ const layout = z
           'Blocking mode (the default) requires backdrop "dim"; set blocking to false or backdrop to "dim".',
       });
     }
-  });
+  }, always);
 
 const color = z.string().refine((v) => parseColor(v) !== null, {
   message:
@@ -195,7 +209,7 @@ const theme = z.strictObject({
   zIndex: z.int().optional(),
   vars: z
     .record(z.string().regex(VAR_NAME, `Must match ${VAR_NAME.source}.`), nonEmpty)
-    .superRefine((vars, ctx) => {
+    .superRefine((vars: Record<string, unknown>, ctx) => {
       for (const name of Object.keys(vars)) {
         if (COLOR_PROPERTIES.has(name)) {
           ctx.addIssue({
@@ -205,7 +219,7 @@ const theme = z.strictObject({
           });
         }
       }
-    })
+    }, always)
     .optional(),
 });
 
@@ -214,11 +228,12 @@ const buttons = z
     settings: z.boolean().optional(),
     order: z.array(z.enum(BUTTONS)).optional(),
   })
-  .superRefine((b, ctx) => {
-    if (b.order === undefined) return;
-    const expected = BUTTONS.filter((name) => name !== "settings" || b.settings !== false);
+  .superRefine((b: Record<string, unknown>, ctx) => {
+    const order = b["order"];
+    if (!Array.isArray(order)) return;
+    const expected = BUTTONS.filter((name) => name !== "settings" || b["settings"] !== false);
     const isPermutation =
-      b.order.length === expected.length && expected.every((name) => b.order?.includes(name));
+      order.length === expected.length && expected.every((name) => order.includes(name));
     if (!isPermutation) {
       ctx.addIssue({
         code: "custom",
@@ -226,7 +241,7 @@ const buttons = z
         message: `Must list ${expected.join(", ")} exactly once each, in any order.`,
       });
     }
-  });
+  }, always);
 
 const record = z.custom<ConsentRecorder | string>(
   (v) => typeof v === "function" || (typeof v === "string" && isRecordUrl(v)),

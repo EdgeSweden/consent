@@ -127,6 +127,10 @@ Re-review is targeted: the previous P1/P2 findings, the code changed for them an
 affected regression surfaces. A full re-review is only warranted when the fix changed
 architecture, a data shape or a public contract.
 
+Fixes are not pushed for re-review. The implementer leaves them uncommitted in the local
+working tree; the re-review session reads `git diff` there. Once the re-review passes, the fixes
+are committed and pushed once.
+
 ### Handoff when the review passes
 
 The reviewer, not the implementer:

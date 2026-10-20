@@ -193,18 +193,27 @@ function hexColor(hex: string): Rgba | null {
   return { r: byte(0), g: byte(1), b: byte(2), a: full.length === 8 ? byte(3) / 255 : 1 };
 }
 
+interface Args {
+  channels: string[];
+  alpha: string | undefined;
+  /** Comma-separated syntax, which has a stricter grammar than the space-separated one. */
+  legacy: boolean;
+}
+
 /** Splits functional arguments in legacy (comma) or modern (space, `/ alpha`) syntax. */
-function splitArgs(body: string): { channels: string[]; alpha: string | undefined } | null {
+function splitArgs(body: string): Args | null {
   if (body.includes(",")) {
     const parts = body.split(",").map((p) => p.trim());
     if (parts.length !== 3 && parts.length !== 4) return null;
-    return { channels: parts.slice(0, 3), alpha: parts[3] };
+    return { channels: parts.slice(0, 3), alpha: parts[3], legacy: true };
   }
   const [main = "", alpha, ...rest] = body.split("/").map((p) => p.trim());
   if (rest.length > 0 || alpha === "") return null;
   const channels = main.split(/\s+/).filter(Boolean);
-  return channels.length === 3 ? { channels, alpha } : null;
+  return channels.length === 3 ? { channels, alpha, legacy: false } : null;
 }
+
+const isPercent = (s: string) => s.endsWith("%");
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const sector = (((h % 360) + 360) % 360) / 30;
@@ -231,12 +240,16 @@ export function parseColor(input: string): Rgba | null {
   const [c1 = "", c2 = "", c3 = ""] = args.channels;
 
   if (fn[1]?.startsWith("rgb")) {
+    // Legacy rgb() takes all numbers or all percentages; browsers reject a mix.
+    if (args.legacy && new Set(args.channels.map(isPercent)).size > 1) return null;
     const r = numOrPercent(c1, 255);
     const g = numOrPercent(c2, 255);
     const b = numOrPercent(c3, 255);
     if (r === null || g === null || b === null) return null;
     return { r: clamp(r, 0, 255), g: clamp(g, 0, 255), b: clamp(b, 0, 255), a: clamp(a, 0, 1) };
   }
+  // Legacy hsl() requires percentages for saturation and lightness.
+  if (args.legacy && !(isPercent(c2) && isPercent(c3))) return null;
   const h = hue(c1);
   const s = numOrPercent(c2, 100);
   const l = numOrPercent(c3, 100);

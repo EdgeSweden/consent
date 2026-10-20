@@ -79,6 +79,85 @@ describe("validateConfig", () => {
     expect(paths(result)).toEqual(expect.arrayContaining(["schemaVersion", "policyVersion"]));
   });
 
+  it("runs the cross-key checks next to unrelated schema errors", () => {
+    const result = withConfig((c) => {
+      c["extra"] = 1;
+      c["defaultLocale"] = "de";
+      delete at<Json>(locale(c, "sv"), "categories")["analytics"];
+      c["theme"] = { colors: { border: "nope", acceptText: "#777777" } };
+    });
+    expect(paths(result)).toEqual(
+      expect.arrayContaining([
+        "extra",
+        "defaultLocale",
+        "locales.sv.categories",
+        "theme.colors.border",
+      ]),
+    );
+    expect(result.warnings.map((w) => w.path)).toEqual(["theme.colors.acceptText"]);
+  });
+
+  it("checks locale strings against categories that have unrelated errors", () => {
+    const result = withConfig((c) => {
+      at<Json>(c["categories"], 0)["extra"] = 1;
+      at<Json>(at<Json>(c["categories"], 1)["services"], 0)["extra"] = 1;
+      delete at<Json>(locale(c, "sv"), "categories")["analytics"];
+      delete at<Json>(locale(c, "sv"), "services")["stats"];
+    });
+    expect(paths(result)).toEqual(
+      expect.arrayContaining([
+        "categories[0].extra",
+        "categories[1].services[0].extra",
+        "locales.sv.categories",
+        "locales.sv.services",
+      ]),
+    );
+  });
+
+  it.each([
+    [
+      "duplicate category ids",
+      (c: Json) => {
+        at<Json>(c["categories"], 0)["required"] = "yes";
+        (c["categories"] as Json[]).push({ id: "analytics" });
+      },
+      ["categories[0].required", "categories[2].id"],
+    ],
+    [
+      "link tokens",
+      (c: Json) => {
+        delete locale(c)["title"];
+        locale(c)["description"] = "See {link:privacy}.";
+      },
+      ["locales.en.title", "locales.en.description"],
+    ],
+    [
+      "blocking with backdrop none",
+      (c: Json) => (c["layout"] = { width: 1, backdrop: "none" }),
+      ["layout.width", "layout.blocking"],
+    ],
+    [
+      "buttons.order",
+      (c: Json) => (c["buttons"] = { settings: "yes", order: ["acceptAll"] }),
+      ["buttons.settings", "buttons.order"],
+    ],
+    [
+      "colour tokens in theme.vars",
+      (c: Json) => (c["theme"] = { vars: { "--brand": "x", "--consent-text": "#000" } }),
+      ["theme.vars.--brand", "theme.vars.--consent-text"],
+    ],
+  ])("checks %s next to a sibling error", (_, patch, expected) => {
+    expect(paths(withConfig(patch))).toEqual(expect.arrayContaining(expected));
+  });
+
+  it("checks locale strings in a locale that has unrelated errors", () => {
+    const result = withConfig((c) => {
+      delete locale(c, "sv")["title"];
+      delete at<Json>(locale(c, "sv"), "categories")["analytics"];
+    });
+    expect(paths(result)).toEqual(["locales.sv.title", "locales.sv.categories"]);
+  });
+
   describe("schemaVersion and policyVersion", () => {
     it("requires schemaVersion 1", () => {
       expectError(
@@ -286,6 +365,14 @@ describe("validateConfig", () => {
       },
     );
 
+    it.each(["rgb(0%, 1, 2%)", "hsl(0, 50%, 50)", "hsl(0, 50, 50%)"])(
+      "rejects the legacy-syntax mix %j that browsers ignore",
+      (value) => {
+        const result = withConfig((c) => (c["theme"] = { colors: { border: value } }));
+        expectError(result, "theme.colors.border");
+      },
+    );
+
     it("rejects an unknown colour token", () => {
       const result = withConfig((c) => (c["theme"] = { colors: { primary: "#000" } }));
       expectError(result, "theme.colors.primary");
@@ -382,6 +469,37 @@ describe("validateConfig", () => {
       [{ theme: { radius: { box: "0.5rem", button: "999px", control: "4px" } } }, null],
     ])("%j", (patch, path) => {
       const result = withConfig((c) => Object.assign(c, patch));
+      if (path === null) expectValid(result);
+      else expectError(result, path);
+    });
+  });
+
+  describe("non-empty strings (decision #14)", () => {
+    it.each([
+      ["locale", (c: Json) => (c["locale"] = "sv"), null],
+      ["locale", (c: Json) => (c["locale"] = ""), "locale"],
+      [
+        "service id",
+        (c: Json) => (at<Json>(at<Json>(c["categories"], 1)["services"], 0)["id"] = ""),
+        "categories[1].services[0].id",
+      ],
+      [
+        "service cookie name",
+        (c: Json) => (at<Json>(at<Json>(c["categories"], 1)["services"], 0)["cookies"] = [""]),
+        "categories[1].services[0].cookies[0]",
+      ],
+      [
+        "link id",
+        (c: Json) => (at<Json>(locale(c)["links"], 0)["id"] = ""),
+        "locales.en.links[0].id",
+      ],
+      [
+        "link label",
+        (c: Json) => (at<Json>(locale(c)["links"], 0)["label"] = ""),
+        "locales.en.links[0].label",
+      ],
+    ])("%s", (_, patch, path) => {
+      const result = withConfig(patch);
       if (path === null) expectValid(result);
       else expectError(result, path);
     });
