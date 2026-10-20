@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Step names are the check names from AGENTS.md. Keep them identical.
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: check:types
+        run: pnpm type-check
+      - name: check:lint
+        run: pnpm lint
+      - name: check:format
+        run: pnpm format:check
+      - name: check:test
+        run: pnpm test
+      - name: check:deps
+        run: pnpm audit --prod --audit-level=high
+      - name: check:build
+        run: pnpm build
+      - name: check:size
+        run: pnpm size
+
+      - name: build demo
+        run: pnpm demo:build
+      - name: install browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - name: check:e2e
+        run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo
+          path: examples/astro/dist
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
