@@ -482,7 +482,7 @@ describe("DOM mirror", () => {
 });
 
 describe("public entry", () => {
-  it("exports the state API without mount until the banner exists", async () => {
+  it("exports the state API without mount until the contract is complete (decision #26)", async () => {
     const entry = await import("../src/index.js");
     expect(Object.keys(entry).sort()).toEqual(["getConsent", "onConsent", "withdraw"]);
   });
