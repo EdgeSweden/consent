@@ -37,7 +37,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "size": "size-limit",
+    "size": "node scripts/size-closure.js && size-limit",
     "demo:build": "echo \"no demo yet: examples/astro lands in P1.7\"",
     "test:e2e": "playwright test --pass-with-no-tests"
   },

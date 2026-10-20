@@ -4,6 +4,7 @@
 import type { ConsentConfig } from "../astro/schema.js";
 import { cookieName, readChoice, writeChoice } from "./cookie.js";
 import { resolveLocale } from "./locale.js";
+import { record } from "./record.js";
 import type { ConsentAction, ConsentState } from "./types.js";
 
 type Subscriber = (state: ConsentState) => void;
@@ -51,6 +52,8 @@ interface Delivery {
   event: boolean;
   /** The subscribers at the time the state was established. */
   to: Subscriber[];
+  /** Runs after the subscribers, in the same order as the states: the record of a choice. */
+  after?: () => void;
 }
 
 const queue: Delivery[] = [];
@@ -68,12 +71,13 @@ function deliver(delivery: Delivery): void {
   try {
     let next: Delivery | undefined;
     while ((next = queue.shift()) !== undefined) {
-      const { doc, state, event, to } = next;
+      const { doc, state, event, to, after } = next;
       mirror(doc, state);
       if (event) doc.dispatchEvent(new CustomEvent("consent:change", { detail: copy(state) }));
       for (const subscriber of to) {
         if (subscribers.has(subscriber)) notify(subscriber, state);
       }
+      after?.();
     }
   } finally {
     delivering = false;
@@ -161,7 +165,14 @@ export function choose(granted: Record<string, boolean>): Transition | null {
   m.stored = next;
   m.state = { ...m.state, categories, at };
   const state = copy(m.state);
-  deliver({ doc: m.doc, state, event: true, to: [...subscribers] });
+  deliver({
+    doc: m.doc,
+    state,
+    event: true,
+    to: [...subscribers],
+    // `state` is never handed out; record() copies what it passes on.
+    after: () => record(m.config, action, { ...state, at }),
+  });
   return { action, state: copy(state) };
 }
 

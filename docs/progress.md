@@ -21,7 +21,7 @@ Tier in parentheses. One `[~]` at a time.
 - [x] (A) P1.2 - Cookie codec + state machine + state API + DOM mirror (plan: Cookie, Action semantics, State API)
 - [x] (A) P1.3 - Banner + settings dialog: DOM, focus, blocking and non-blocking, positions (plan: Runtime behaviour, Accessibility)
 - [x] (A) P1.4 - Theme + locale resolution + link tokens, CSP-clean (plan: Config, Locale resolution, CSP)
-- [ ] (A) P1.5 - Record hook: function and URL forms (plan: Record)
+- [x] (A) P1.5 - Record hook: function and URL forms (plan: Record)
 - [ ] (B) P1.6 - Astro integration: build-time validation, virtual module, injected script (plan: Astro integration)
 - [ ] (B) P1.7 - Demo site + e2e suite with axe and CSP assertions (plan: Demo, Tests)
 - [ ] (A) P1.8 - Size budget, release workflow, README, CHANGELOG, tag v0.1.0 (plan: Size budget, Releases)

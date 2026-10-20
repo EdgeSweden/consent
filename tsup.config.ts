@@ -1,4 +1,5 @@
 import { defineConfig } from "tsup";
+import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig({
   entry: { index: "src/index.ts", astro: "src/astro/index.ts", styles: "src/styles.css" },
@@ -8,6 +9,10 @@ export default defineConfig({
   dts: { entry: { index: "src/index.ts", astro: "src/astro/index.ts" } },
   clean: true,
   treeshake: true,
+  // Each entry is self-contained, so a budget never misses a shared chunk (plan: Size budget).
+  splitting: false,
+  // `packageVersion` in the record payload (decision #33).
+  define: { __PACKAGE_VERSION__: JSON.stringify(pkg.version) },
   // The size budget is measured on dist (plan: Size budget).
   minify: true,
 });
