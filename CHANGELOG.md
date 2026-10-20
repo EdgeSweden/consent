@@ -13,3 +13,8 @@ All notable changes to this project are documented in this file. The format foll
 - `getConsent`, `onConsent` and `withdraw` on the browser entry, the consent cookie and the
   `consent:change` event and `data-consent-<id>` attributes. They take effect once `mount` ships
   with the banner.
+- Theme support: `theme.colors`, `radius`, `font`, `zIndex`, `vars` and `layout.width` become
+  `--consent-*` custom properties set one at a time through `style.setProperty`, so the banner stays
+  clean under a strict CSP.
+- `{link:<id>}` tokens in `description` and `settingsDescription` render as links to the locale's
+  `links` entries.

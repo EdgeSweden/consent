@@ -3,6 +3,8 @@
 
 import type { ConsentConfig, LocaleStrings } from "../astro/schema.js";
 import { acceptAll, choose, getConsent, needsChoice, rejectAll } from "./state.js";
+import { appendText } from "./text.js";
+import { applyTheme } from "./theme.js";
 
 type FirstLayerButton = "acceptAll" | "rejectAll" | "settings";
 
@@ -86,6 +88,7 @@ function build(config: ConsentConfig, doc: Document, locale: string, s: LocaleSt
   const root = el(doc, "div", "consent-root");
   root.lang = locale;
   root.dataset["position"] = layout.position ?? "center";
+  applyTheme(config, root);
   const backdrop = el(doc, "div", "consent-backdrop");
   backdrop.setAttribute("aria-hidden", "true");
   backdrop.hidden = true;
@@ -103,7 +106,8 @@ function build(config: ConsentConfig, doc: Document, locale: string, s: LocaleSt
   title.id = `${prefix}title`;
   if (s.dialogLabel !== undefined) banner.setAttribute("aria-label", s.dialogLabel);
   else banner.setAttribute("aria-labelledby", title.id);
-  const description = el(doc, "p", "consent-description", s.description);
+  const description = el(doc, "p", "consent-description");
+  appendText(doc, description, s.description, s.links);
   description.id = `${prefix}description`;
   banner.setAttribute("aria-describedby", description.id);
   const bannerActions = el(doc, "div", "consent-actions");
@@ -122,7 +126,8 @@ function build(config: ConsentConfig, doc: Document, locale: string, s: LocaleSt
   header.append(settingsTitle, button(doc, "close", s.close, closeSettings));
   settings.append(header);
   if (s.settingsDescription !== undefined) {
-    const p = el(doc, "p", "consent-description", s.settingsDescription);
+    const p = el(doc, "p", "consent-description");
+    appendText(doc, p, s.settingsDescription, s.links);
     p.id = `${prefix}settings-description`;
     settings.setAttribute("aria-describedby", p.id);
     settings.append(p);

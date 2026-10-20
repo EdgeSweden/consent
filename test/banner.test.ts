@@ -184,6 +184,28 @@ describe("first layer", () => {
     expect(q(".consent-root")?.getAttribute("data-position")).toBe("center");
   });
 
+  it("renders link tokens in the description and settings description (plan: Locale resolution)", () => {
+    mounted(
+      testConfig({
+        locales: {
+          en: {
+            ...EN,
+            description: "Read the {link:policy}.",
+            settingsDescription: "See {link:policy} for details.",
+            links: [{ id: "policy", label: "privacy policy", href: "/privacy" }],
+          },
+        },
+      }),
+    );
+    const description = q(".consent-banner .consent-description") as HTMLElement;
+    expect(description.textContent).toBe("Read the privacy policy.");
+    expect(description.querySelector("a")?.getAttribute("href")).toBe("/privacy");
+    const settingsDescription = q(".consent-settings .consent-description") as HTMLElement;
+    expect(settingsDescription.textContent).toBe("See privacy policy for details.");
+    expect(settingsDescription.querySelector("a")?.getAttribute("href")).toBe("/privacy");
+    expect(banner().getAttribute("aria-describedby")).toBe(description.id);
+  });
+
   it("drops Settings when disabled", () => {
     mounted(testConfig({ buttons: { settings: false } }));
     expect(texts(banner())).toEqual(["Accept all", "Reject all"]);
@@ -598,6 +620,18 @@ describe("stylesheet", () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)[^@]*animation: none !important;\s*transition: none !important;/,
     );
+  });
+
+  it.each([
+    "--consent-radius-box",
+    "--consent-radius-button",
+    "--consent-radius-control",
+    "--consent-font",
+    "--consent-z-index",
+    "--consent-width",
+  ])("declares and uses %s, which the theme sets (decision #32)", (name) => {
+    expect(css).toMatch(new RegExp(`${name}:`));
+    expect(css).toContain(`var(${name})`);
   });
 
   it("styles focus with the focus token", () => {
