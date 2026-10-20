@@ -14,7 +14,14 @@ const staticString = (pattern) =>
 
 export default tseslint.config(
   {
-    ignores: ["dist/", "coverage/", "playwright-report/", "test-results/", "examples/*/dist/"],
+    ignores: [
+      "dist/",
+      "coverage/",
+      "playwright-report/",
+      "test-results/",
+      "examples/*/dist/",
+      "examples/*/.astro/",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strict,
