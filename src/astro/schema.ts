@@ -3,6 +3,8 @@
 
 import { z } from "zod";
 import type { ConsentRecorder } from "../core/types.js";
+import { LINK_TOKEN } from "../core/text.js";
+import { isLinkHref, isRecordUrl } from "../core/urls.js";
 import { parseColor } from "./colors.js";
 import { THEME_COLORS, colorProperty, type ThemeColor } from "./defaults.js";
 
@@ -13,7 +15,6 @@ const HOSTNAME =
   /^\.?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
 const CATEGORY_ID = /^[a-z][a-z0-9_-]{0,31}$/;
 const VAR_NAME = /^--consent-[A-Za-z0-9_-]+$/;
-const LINK_TOKEN = /\{link:([^}]*)\}/g;
 
 const BUTTONS = ["acceptAll", "rejectAll", "settings"] as const;
 
@@ -26,37 +27,6 @@ const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const always = { when: (payload: { value: unknown }) => isObject(payload.value) };
 const alwaysArray = { when: (payload: { value: unknown }) => Array.isArray(payload.value) };
 const COLOR_PROPERTIES = new Set(THEME_COLORS.map(colorProperty));
-
-/** `/path`, but not the scheme-relative `//host` or `/\host` that browsers treat alike. */
-function isRootRelative(value: string): boolean {
-  return value.startsWith("/") && !/^\/[/\\]/.test(value);
-}
-
-function isHttpUrl(value: string): boolean {
-  if (!/^https?:\/\//i.test(value)) return false;
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// The URL parser strips tab, LF and CR anywhere, so "/\t/host" would resolve off-site.
-// eslint-disable-next-line no-control-regex -- matching control characters is the point
-const CONTROL = /[\u0000-\u001F\u007F]/;
-
-/** Plan: Validation, `record`. */
-export function isRecordUrl(value: string): boolean {
-  return !CONTROL.test(value) && (isRootRelative(value) || isHttpUrl(value));
-}
-
-/** Decision #12. */
-export function isLinkHref(value: string): boolean {
-  return (
-    !CONTROL.test(value) && (isRootRelative(value) || isHttpUrl(value) || value.startsWith("#"))
-  );
-}
 
 const cookie = z.strictObject({
   name: z.string().regex(COOKIE_TOKEN, "Must be a valid cookie name (RFC 6265 token).").optional(),
