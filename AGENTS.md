@@ -201,7 +201,8 @@ YYYY-MM-DD - <decision as a fact, one sentence> - <why/trigger> (decision #N, pl
   only by `./astro` and `validateConfig`; Astro only by `./astro`.
 - Never weaken the demo's CSP or add `'unsafe-inline'` to make something pass.
 - Never publish to npm from a machine; releases go through the tag workflow with trusted
-  publishing. Nothing is ever unpublished; a bad release is fixed forward.
+  publishing. The one exception is the bootstrap placeholder of decision #39. Nothing is ever
+  unpublished; a bad release is fixed forward.
 - Do not add or upgrade dependencies without the maintainer's approval.
 - Do not change a public contract as an incidental fix.
 - Secrets never enter the repository. There are no long-lived tokens to store.

@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
+First release.
+
 ### Added
 
 - Config schema version 1 and `validateConfig`, exported from `@edgesweden/consent/astro`. It
@@ -26,8 +30,9 @@ All notable changes to this project are documented in this file. The format foll
   `consent({ config: "./src/consent.config.ts" })` loads the config module's default export at
   build time, fails the build on any validation error, logs warnings, and adds the stylesheet and
   one page script that calls `mount` to every page. Astro >= 5.4 is an optional peer dependency.
+- A size budget of 7 KB gzipped for the browser core including the stylesheet, counting every file
+  the entry loads, enforced in CI.
+- Releases are published from a version tag with npm provenance.
 
-### Changed
-
-- The size budget of the browser core including the stylesheet is 7 KB gzipped (was 6 KB), and it
-  now counts every file the entry loads.
+[Unreleased]: https://github.com/EdgeSweden/consent/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/EdgeSweden/consent/releases/tag/v0.1.0
