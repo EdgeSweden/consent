@@ -17,7 +17,7 @@ Tier in parentheses. One `[~]` at a time.
 
 ## Phase 1: core + Astro integration, v0.1.0
 
-- [ ] (A) P1.1 - Config schema + validateConfig, one test per rule (plan: Config, Validation)
+- [x] (A) P1.1 - Config schema + validateConfig, one test per rule (plan: Config, Validation)
 - [ ] (A) P1.2 - Cookie codec + state machine + state API + DOM mirror (plan: Cookie, Action semantics, State API)
 - [ ] (A) P1.3 - Banner + settings dialog: DOM, focus, blocking and non-blocking, positions (plan: Runtime behaviour, Accessibility)
 - [ ] (A) P1.4 - Theme + locale resolution + link tokens, CSP-clean (plan: Config, Locale resolution, CSP)

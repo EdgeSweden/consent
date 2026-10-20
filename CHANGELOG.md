@@ -5,3 +5,8 @@ All notable changes to this project are documented in this file. The format foll
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+
+- Config schema version 1 and `validateConfig`, exported from `@edgesweden/consent/astro`. It
+  collects every error with the offending key and reports contrast warnings.
