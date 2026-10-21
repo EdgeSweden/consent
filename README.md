@@ -192,6 +192,8 @@ Schema version 1. Every key is validated and unknown keys fail at every level.
 | `buttons.settings`                      | `true`                                   | show Settings on the first layer                                                                |
 | `buttons.order`                         | `["acceptAll", "rejectAll", "settings"]` | an exact permutation of the shown buttons; `acceptAll` and `rejectAll` can never be left out    |
 | `record`                                | none                                     | a function, a root-relative path (`/…`) or an absolute `http(s)` URL; see Record                |
+| `consentMode.mapping`                   | none                                     | category id → Consent Mode keys; see Google Consent Mode                                        |
+| `consentMode.extra`                     | none                                     | Consent Mode key → `"granted"` or `"denied"`, for keys no category owns                         |
 | `gateScripts`                           | `false`                                  | a boolean; turns on script gating, see Script gating                                            |
 
 Across the config:
@@ -300,6 +302,51 @@ every consent change and on `DOMContentLoaded`; a script added later waits for t
 A script that has run cannot be unloaded: after a withdrawal it stays active until the page
 reloads, so reload or tell the visitor if that matters. `installScriptGating` returns a function
 that stops further activation.
+
+## Google Consent Mode
+
+Map each category to the Consent Mode v2 keys it controls, and set any key no category owns in
+`extra`:
+
+```ts
+consentMode: {
+  mapping: {
+    necessary: ["security_storage"],
+    analytics: ["analytics_storage"],
+    marketing: ["ad_storage", "ad_user_data", "ad_personalization"],
+  },
+  extra: { functionality_storage: "granted", personalization_storage: "denied" },
+},
+```
+
+The keys are `ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`,
+`functionality_storage`, `personalization_storage` and `security_storage`. Each key belongs to at
+most one category and may not also be in `extra`; a mapping key must name a declared category.
+
+Then install the adapter after `mount`:
+
+```ts
+import { mount } from "@edgesweden/consent";
+import { installConsentMode } from "@edgesweden/consent/gtag";
+
+mount(config);
+installConsentMode(config);
+```
+
+On install the adapter pushes `gtag("consent", "default", …)` onto `window.dataLayer`, with the keys
+of a required category `granted`, those of an optional category `denied` and `extra` as given. It
+pushes `gtag("consent", "update", …)` with every mapped key whenever those values change, including
+at mount when a stored choice grants a mapped category. Only the keys you list are ever set, so list
+every key your tags read. The adapter does not define `window.gtag`.
+
+Load Google's tag after the consent script, or gate it with `data-consent` so that the `default`
+command is already queued when the tag starts:
+
+```html
+<script type="text/plain" data-consent="analytics" src="https://example.com/gtag.js"></script>
+```
+
+`installConsentMode` returns a function that stops further updates.
 
 ## Content Security Policy
 

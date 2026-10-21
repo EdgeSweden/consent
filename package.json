@@ -32,6 +32,10 @@
       "types": "./dist/gate.d.ts",
       "import": "./dist/gate.js"
     },
+    "./gtag": {
+      "types": "./dist/gtag.d.ts",
+      "import": "./dist/gtag.js"
+    },
     "./astro": {
       "types": "./dist/astro.d.ts",
       "import": "./dist/astro.js"

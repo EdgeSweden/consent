@@ -12,6 +12,10 @@ All notable changes to this project are documented in this file. The format foll
   `<script type="text/plain" data-consent="<category>">` elements once their category is granted,
   or at mount for a required category. Each runs at most once. The `gateScripts` config key
   (default `false`) is now accepted. Budget: 1 KB gzipped.
+- Google Consent Mode v2 at `@edgesweden/consent/gtag`: `installConsentMode(config)` pushes a
+  `default` consent command through `window.dataLayer`, with required categories' keys granted and
+  optional ones denied, and an `update` whenever the mapped values change. The `consentMode` config
+  key (`mapping` and `extra`) is now accepted and validated. Budget: 1 KB gzipped.
 
 ## [0.1.0] - 2026-10-20
 

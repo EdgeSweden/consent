@@ -10,5 +10,11 @@
     "path": ["dist/gate.js"],
     "limit": "1 KB",
     "gzip": true
+  },
+  {
+    "name": "consent mode",
+    "path": ["dist/gtag.js"],
+    "limit": "1 KB",
+    "gzip": true
   }
 ]

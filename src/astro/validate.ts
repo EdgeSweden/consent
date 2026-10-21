@@ -16,9 +16,6 @@ export type ValidationResult =
   | { ok: true; config: ConsentConfig; errors: []; warnings: ValidationIssue[] }
   | { ok: false; errors: ValidationIssue[]; warnings: ValidationIssue[] };
 
-// Keys that a later version adds (plan: Version boundary).
-const LATER_KEYS: Record<string, string> = { consentMode: "v0.2.0" };
-
 function formatPath(path: ReadonlyArray<PropertyKey>): string {
   const text = path
     .map((p) => (typeof p === "number" ? `[${p}]` : p === "" ? `[""]` : `.${String(p)}`))
@@ -29,16 +26,10 @@ function formatPath(path: ReadonlyArray<PropertyKey>): string {
 
 function fromZod(issue: z.core.$ZodIssue): ValidationIssue[] {
   if (issue.code === "unrecognized_keys") {
-    return issue.keys.map((key) => {
-      const later = issue.path.length === 0 ? LATER_KEYS[key] : undefined;
-      return {
-        path: formatPath([...issue.path, key]),
-        message:
-          later === undefined
-            ? "Unknown key."
-            : `${key} is added in @edgesweden/consent ${later}; this version does not support it.`,
-      };
-    });
+    return issue.keys.map((key) => ({
+      path: formatPath([...issue.path, key]),
+      message: "Unknown key.",
+    }));
   }
   if (issue.code === "invalid_key") {
     return issue.issues.map((inner) => ({ path: formatPath(issue.path), message: inner.message }));
@@ -63,6 +54,8 @@ interface Parts {
   /** The valid config colours; an invalid one is left at its default and reported by the schema. */
   colors: Partial<Record<ThemeColor, string>>;
   strictContrast: boolean;
+  /** The category ids `consentMode.mapping` names, when it is an object. */
+  mapped: string[];
 }
 
 function parts(input: unknown): Parts {
@@ -71,6 +64,7 @@ function parts(input: unknown): Parts {
   const validation = isObject(raw["validation"]) ? raw["validation"] : {};
   const locales = isObject(raw["locales"]) ? raw["locales"] : undefined;
   const colors = isObject(theme["colors"]) ? theme["colors"] : {};
+  const consentMode = isObject(raw["consentMode"]) ? raw["consentMode"] : {};
   const categories = Array.isArray(raw["categories"])
     ? raw["categories"].filter(isObject)
     : undefined;
@@ -102,6 +96,7 @@ function parts(input: unknown): Parts {
       }),
     ),
     strictContrast: validation["strictContrast"] === true,
+    mapped: isObject(consentMode["mapping"]) ? Object.keys(consentMode["mapping"]) : [],
   };
 }
 
@@ -145,6 +140,19 @@ function checkLocales(p: Parts, errors: ValidationIssue[]): void {
   }
 }
 
+/** Every `consentMode.mapping` key names a declared category (decision #48). */
+function checkConsentMode(p: Parts, errors: ValidationIssue[]): void {
+  if (p.ids === undefined) return;
+  for (const id of p.mapped) {
+    if (!p.ids.categories.includes(id)) {
+      errors.push({
+        path: `consentMode.mapping.${id}`,
+        message: "Matches no declared category id.",
+      });
+    }
+  }
+}
+
 /** Contrast of the checked pairs, with config colours merged over the defaults (decision #9). */
 function checkContrast(p: Parts, errors: ValidationIssue[], warnings: ValidationIssue[]): void {
   const colors = { ...DEFAULT_COLORS, ...p.colors };
@@ -179,6 +187,7 @@ export function validateConfig(input: unknown): ValidationResult {
   const warnings: ValidationIssue[] = [];
   const p = parts(input);
   checkLocales(p, errors);
+  checkConsentMode(p, errors);
   checkContrast(p, errors, warnings);
   return parsed.success && errors.length === 0
     ? { ok: true, config: parsed.data, errors: [], warnings }
