@@ -466,8 +466,9 @@ The budget is part of the public contract: raising it is a CHANGELOG entry.
 
 - Semantic versioning. Within `0.x`, minor bumps may change the config schema only additively;
   any breaking change to the config, the cookie format or the state API bumps the major.
-- A version tag (`vX.Y.Z`) on `main` runs the full CI job, then publishes to npm with provenance
-  (`npm publish --provenance`) using trusted publishing; no long-lived token is stored.
+- A version tag (`vX.Y.Z`) on `main` runs the full CI job, then stages the package on npm with
+  provenance (`npm stage publish --provenance`) using trusted publishing; no long-lived token is
+  stored. The version goes live only when a maintainer approves it with 2FA (decision #41).
 - `CHANGELOG.md` follows Keep a Changelog; the release job refuses a tag whose version has no
   entry.
 - `packageVersion` in records is injected at build time from `package.json`.

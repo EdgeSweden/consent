@@ -25,6 +25,7 @@ Tier in parentheses. One `[~]` at a time.
 - [x] (A) P1.6 - Astro integration: build-time validation, virtual module, injected script (plan: Astro integration)
 - [x] (B) P1.7 - Demo site + e2e suite with axe and CSP assertions (plan: Demo, Tests)
 - [x] (A) P1.8 - Size budget, release workflow, README, CHANGELOG, tag v0.1.0 (plan: Size budget, Releases)
+- [~] (A) P1.9 - Staged publishing: the release workflow stages, a maintainer approves with 2FA (plan: Releases) - PR open on build/staged-publish, awaiting review
 
 ## Phase 2: adapters, v0.2.0
 
