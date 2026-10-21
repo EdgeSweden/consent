@@ -10,7 +10,8 @@ A config-driven cookie-consent banner for static and server-rendered websites.
 - Nothing optional happens before the visitor chooses, and Reject all is as easy as Accept all
 
 The core and stylesheet are under 7 KB gzipped and have no runtime dependencies. Script gating
-is a separate entry under 1 KB; a Google Consent Mode v2 adapter is planned for 0.2.0.
+and the Google Consent Mode v2 adapter are separate entries, each under 1 KB, that the Astro
+integration bundles only when the config uses them.
 
 ## Install
 
@@ -34,8 +35,10 @@ export default defineConfig({
 
 `config` is a path, relative to the Astro root, to a module whose default export is the config.
 At build time the integration loads it, runs `validateConfig`, fails the build on any error, logs
-warnings and adds the stylesheet and one page script that calls `mount` to every page. Nothing
-is added to your layouts. The config module is bundled for the browser, so a `record` function
+warnings and adds the stylesheet and one page script that calls `mount` to every page. The script
+also installs [script gating](#script-gating) when the config sets `gateScripts: true` and
+[Consent Mode](#google-consent-mode) when it has `consentMode`; an adapter the config does not use
+is not bundled. Nothing is added to your layouts. The config module is bundled for the browser, so a `record` function
 works; keep it free of anything you would not ship to visitors.
 
 ```ts
@@ -281,7 +284,8 @@ Mark each script that belongs to a category as inert text with the category id:
 </script>
 ```
 
-Then install the adapter after `mount`:
+With the Astro integration, set `gateScripts: true` in the config. On other hosts, install the
+adapter after `mount`:
 
 ```ts
 import { mount } from "@edgesweden/consent";
@@ -323,7 +327,9 @@ The keys are `ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_stor
 `functionality_storage`, `personalization_storage` and `security_storage`. Each key belongs to at
 most one category and may not also be in `extra`; a mapping key must name a declared category.
 
-Then install the adapter after `mount`:
+The Astro integration installs the adapter whenever the config has `consentMode`. On other hosts,
+install it after `mount`, and before script gating if you use both, so that the `default` command
+is queued before a required gated script runs:
 
 ```ts
 import { mount } from "@edgesweden/consent";

@@ -1,6 +1,7 @@
 ---
 // Shared page chrome: language switch, the reopen control and withdraw() in the footer, and the
-// live consent state and record list that the demo exists to show (plan: Demo).
+// live consent state, record list, activated gated scripts and Consent Mode commands that the demo
+// exists to show (plan: Demo).
 import { pageStrings, type PageId } from "../strings.js";
 
 interface Props {
@@ -36,7 +37,14 @@ const { title, body } = t.pages[page];
       <pre id="consent-state"></pre>
       <h2>{t.records}</h2>
       <ol id="consent-records"></ol>
+      <h2>{t.gatedScripts}</h2>
+      <ul id="gated-scripts"></ul>
+      <h2>{t.dataLayer}</h2>
+      <ol id="data-layer"></ol>
     </main>
+    <script is:inline type="text/plain" data-consent="necessary" src="/gated/necessary.js"></script>
+    <script is:inline type="text/plain" data-consent="analytics" src="/gated/analytics.js"></script>
+    <script is:inline type="text/plain" data-consent="marketing" src="/gated/marketing.js"></script>
     <footer>
       <button type="button" data-consent="open">{t.cookieSettings}</button>
       <button type="button" id="withdraw">{t.withdraw}</button>
@@ -50,6 +58,22 @@ const { title, body } = t.pages[page];
         const out = document.getElementById("consent-state");
         if (out) out.textContent = JSON.stringify(state, null, 2);
       });
+
+      // A stub for gtag.js, which reads the same queue: each command the Consent Mode adapter
+      // pushes is listed, whether it was pushed before this script ran or after.
+      const host = window as Window & { dataLayer?: IArguments[] };
+      const dataLayer = (host.dataLayer ??= []);
+      const show = (entry: IArguments) => {
+        const item = document.createElement("li");
+        item.textContent = JSON.stringify(Array.from(entry));
+        document.getElementById("data-layer")?.append(item);
+      };
+      dataLayer.forEach(show);
+      const push = dataLayer.push.bind(dataLayer);
+      dataLayer.push = (...entries) => {
+        entries.forEach(show);
+        return push(...entries);
+      };
     </script>
   </body>
 </html>

@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-21
+
 ### Added
 
 - Script gating at `@edgesweden/consent/gate`: `installScriptGating(config)` activates
@@ -16,6 +18,9 @@ All notable changes to this project are documented in this file. The format foll
   `default` consent command through `window.dataLayer`, with required categories' keys granted and
   optional ones denied, and an `update` whenever the mapped values change. The `consentMode` config
   key (`mapping` and `extra`) is now accepted and validated. Budget: 1 KB gzipped.
+- The Astro integration installs script gating when the config sets `gateScripts: true` and
+  Consent Mode when it has `consentMode`, after `mount` and Consent Mode first. An adapter the
+  config does not use is not bundled.
 
 ## [0.1.0] - 2026-10-20
 
@@ -45,5 +50,6 @@ First release.
   the entry loads, enforced in CI.
 - Releases are published from a version tag with npm provenance.
 
-[Unreleased]: https://github.com/EdgeSweden/consent/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/EdgeSweden/consent/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/EdgeSweden/consent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/EdgeSweden/consent/releases/tag/v0.1.0

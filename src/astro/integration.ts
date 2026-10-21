@@ -1,12 +1,13 @@
 // The Astro integration (plan: Astro integration). Loads the site's config module at build time,
 // fails the build when validateConfig rejects it, exposes the module through a virtual module and
-// injects one page script that calls `mount`. The stylesheet is imported from every page's
+// injects one page script that calls `mount` and installs the adapters the config asks for. The stylesheet is imported from every page's
 // frontmatter (decision #29), the only stage at which Astro bundles an injected CSS import.
 
 import { createRequire } from "node:module";
 import { isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { AstroIntegration } from "astro";
+import type { ConsentConfig } from "./schema.js";
 import { validateConfig, type ValidationIssue } from "./validate.js";
 
 export interface ConsentIntegrationOptions {
@@ -17,12 +18,25 @@ export interface ConsentIntegrationOptions {
 export const VIRTUAL_CONFIG = "virtual:@edgesweden/consent/config";
 const RESOLVED_CONFIG = `\0${VIRTUAL_CONFIG}`;
 
-/** The injected page script; Astro bundles and hashes it like any other page script (plan: CSP). */
-export const PAGE_SCRIPT = [
-  `import { mount } from "@edgesweden/consent";`,
-  `import config from "${VIRTUAL_CONFIG}";`,
-  `mount(config);`,
-].join("\n");
+/**
+ * The injected page script; Astro bundles and hashes it like any other page script (plan: CSP).
+ * An adapter is imported only when the config uses it, so a site that uses neither ships neither
+ * (plan: Astro integration). Consent Mode installs before gating, so its `default` command is
+ * queued before a required gated script can run.
+ */
+export function pageScript(config: ConsentConfig): string {
+  const gate = config.gateScripts === true;
+  const gtag = config.consentMode !== undefined;
+  return [
+    `import { mount } from "@edgesweden/consent";`,
+    ...(gtag ? [`import { installConsentMode } from "@edgesweden/consent/gtag";`] : []),
+    ...(gate ? [`import { installScriptGating } from "@edgesweden/consent/gate";`] : []),
+    `import config from "${VIRTUAL_CONFIG}";`,
+    `mount(config);`,
+    ...(gtag ? [`installConsentMode(config);`] : []),
+    ...(gate ? [`installScriptGating(config);`] : []),
+  ].join("\n");
+}
 
 /** Emitted as a `<link rel="stylesheet">` to a bundled file, which `style-src 'self'` allows. */
 export const STYLE_IMPORT = `import "@edgesweden/consent/styles.css";`;
@@ -107,7 +121,7 @@ export default function consent(options: ConsentIntegrationOptions): AstroIntegr
           },
         });
         injectScript("page-ssr", STYLE_IMPORT);
-        injectScript("page", PAGE_SCRIPT);
+        injectScript("page", pageScript(result.config));
       },
     },
   };

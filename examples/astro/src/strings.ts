@@ -79,6 +79,8 @@ export const pageStrings = {
     withdraw: "Withdraw consent",
     state: "Current consent",
     records: "Recorded choices",
+    gatedScripts: "Activated scripts",
+    dataLayer: "Consent Mode commands",
   },
   sv: {
     pages: {
@@ -103,6 +105,8 @@ export const pageStrings = {
     withdraw: "Återkalla samtycke",
     state: "Nuvarande samtycke",
     records: "Registrerade val",
+    gatedScripts: "Aktiverade skript",
+    dataLayer: "Consent Mode-kommandon",
   },
 } satisfies Record<
   "en" | "sv",

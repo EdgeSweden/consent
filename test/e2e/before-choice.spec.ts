@@ -3,12 +3,14 @@ import type { Request } from "@playwright/test";
 import { BLOCKING, banner, expect, storedConsent, test } from "./fixtures.js";
 
 /**
- * The only requests a fresh page may make: the document itself, and the scripts and stylesheet
- * Astro built into /_astro/. Any fetch, XHR, beacon or other script fails the test.
+ * The only requests a fresh page may make: the document itself, the scripts and stylesheet Astro
+ * built into /_astro/ and the required category's gated script. Any fetch, XHR, beacon or other
+ * script, including an optional category's gated script, fails the test.
  */
 function expected(request: Request, document: string): boolean {
   if (request.method() !== "GET") return false;
   if (request.resourceType() === "document") return request.url() === document;
+  if (request.url() === `${BLOCKING}/gated/necessary.js`) return true;
   return (
     ["script", "stylesheet"].includes(request.resourceType()) &&
     new RegExp(`^${BLOCKING}/_astro/[\\w.-]+\\.(js|css)$`).test(request.url())
