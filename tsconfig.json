@@ -20,6 +20,7 @@
     "paths": {
       "@edgesweden/consent": ["./src/index.ts"],
       "@edgesweden/consent/gate": ["./src/gate/index.ts"],
+      "@edgesweden/consent/gtag": ["./src/gtag/index.ts"],
       "@edgesweden/consent/astro": ["./src/astro/index.ts"]
     }
   },

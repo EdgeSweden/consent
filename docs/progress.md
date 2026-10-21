@@ -30,5 +30,5 @@ Tier in parentheses. One `[~]` at a time.
 ## Phase 2: adapters, v0.2.0
 
 - [x] (A) P2.1 - Script-gating adapter + `gateScripts` key (plan: Script gating, Version boundary)
-- [ ] (A) P2.2 - Consent Mode v2 adapter + `consentMode` key (plan: Google Consent Mode v2)
+- [x] (A) P2.2 - Consent Mode v2 adapter + `consentMode` key (plan: Google Consent Mode v2)
 - [ ] (B) P2.3 - Conditional adapter imports in the integration, demo and README updates, tag v0.2.0 (plan: Astro integration, Demo)

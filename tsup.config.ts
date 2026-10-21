@@ -5,6 +5,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     gate: "src/gate/index.ts",
+    gtag: "src/gtag/index.ts",
     astro: "src/astro/index.ts",
     styles: "src/styles.css",
   },
@@ -12,7 +13,12 @@ export default defineConfig({
   target: "es2022",
   platform: "browser",
   dts: {
-    entry: { index: "src/index.ts", gate: "src/gate/index.ts", astro: "src/astro/index.ts" },
+    entry: {
+      index: "src/index.ts",
+      gate: "src/gate/index.ts",
+      gtag: "src/gtag/index.ts",
+      astro: "src/astro/index.ts",
+    },
   },
   clean: true,
   treeshake: true,

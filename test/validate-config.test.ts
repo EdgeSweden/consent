@@ -547,6 +547,85 @@ describe("validateConfig", () => {
     });
   });
 
+  describe("consentMode", () => {
+    const set = (mode: unknown) => withConfig((c) => (c["consentMode"] = mode));
+
+    it("accepts a mapping with required and optional categories and extra keys", () => {
+      expectValid(
+        set({
+          mapping: { necessary: ["security_storage"], analytics: ["analytics_storage"] },
+          extra: { ad_storage: "denied", functionality_storage: "granted" },
+        }),
+      );
+    });
+
+    it("accepts every Consent Mode v2 key", () => {
+      const keys = [
+        "ad_storage",
+        "ad_user_data",
+        "ad_personalization",
+        "analytics_storage",
+        "functionality_storage",
+        "personalization_storage",
+        "security_storage",
+      ];
+      expectValid(set({ mapping: { analytics: keys } }));
+    });
+
+    it("rejects an unknown key in mapping", () => {
+      expectError(
+        set({ mapping: { analytics: ["cookie_storage"] } }),
+        "consentMode.mapping.analytics[0]",
+      );
+    });
+
+    it("rejects an unknown key or value in extra", () => {
+      const result = set({ mapping: {}, extra: { cookie_storage: "denied", ad_storage: "yes" } });
+      expect(result.ok).toBe(false);
+      expect(paths(result)).toEqual([
+        "consentMode.extra.ad_storage",
+        "consentMode.extra.cookie_storage",
+      ]);
+    });
+
+    it("rejects a mapping key that names no category", () => {
+      expectError(set({ mapping: { stats: ["analytics_storage"] } }), "consentMode.mapping.stats");
+    });
+
+    it("rejects an empty key list", () => {
+      expectError(set({ mapping: { analytics: [] } }), "consentMode.mapping.analytics");
+    });
+
+    it("rejects a key mapped to two categories", () => {
+      expectError(
+        set({ mapping: { necessary: ["ad_storage"], analytics: ["ad_storage"] } }),
+        "consentMode.mapping.analytics[0]",
+      );
+    });
+
+    it("rejects a key listed twice for one category", () => {
+      expectError(
+        set({ mapping: { analytics: ["ad_storage", "ad_storage"] } }),
+        "consentMode.mapping.analytics[1]",
+      );
+    });
+
+    it("rejects a key in both mapping and extra", () => {
+      expectError(
+        set({ mapping: { analytics: ["ad_storage"] }, extra: { ad_storage: "denied" } }),
+        "consentMode.extra.ad_storage",
+      );
+    });
+
+    it("requires mapping", () => {
+      expectError(set({ extra: { ad_storage: "denied" } }), "consentMode.mapping");
+    });
+
+    it("rejects an unknown key", () => {
+      expectError(set({ mapping: {}, region: ["SE"] }), "consentMode.region");
+    });
+  });
+
   describe("unknown keys fail at every level", () => {
     it.each([
       ["(root)", "extra", (c: Json) => (c["extra"] = 1)],
@@ -579,12 +658,6 @@ describe("validateConfig", () => {
       ["buttons", "buttons.close", (c: Json) => (c["buttons"] = { close: true })],
     ])("%s", (_, path, patch) => {
       expectError(withConfig(patch), path);
-    });
-
-    it("names the version that adds consentMode", () => {
-      const result = withConfig((c) => (c["consentMode"] = { mapping: {} }));
-      expectError(result, "consentMode");
-      expect(result.errors.find((e) => e.path === "consentMode")?.message).toMatch(/v0\.2\.0/);
     });
   });
 });

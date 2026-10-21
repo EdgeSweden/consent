@@ -18,6 +18,17 @@ const VAR_NAME = /^--consent-[A-Za-z0-9_-]+$/;
 
 const BUTTONS = ["acceptAll", "rejectAll", "settings"] as const;
 
+/** The Google Consent Mode v2 keys (decision #48). */
+export const GTAG_CONSENT_KEYS = [
+  "ad_storage",
+  "ad_user_data",
+  "ad_personalization",
+  "analytics_storage",
+  "functionality_storage",
+  "personalization_storage",
+  "security_storage",
+] as const;
+
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -218,6 +229,42 @@ const record = z.custom<ConsentRecorder | string>(
   "Must be a function, a root-relative path (/…) or an absolute http(s) URL.",
 );
 
+const gtagKey = z.enum(GTAG_CONSENT_KEYS);
+
+// Each key is owned by one category or set in `extra`, never both (plan: Validation). Whether a
+// mapping key names a declared category is checked in validate.ts.
+const consentMode = z
+  .strictObject({
+    mapping: z.record(z.string(), z.array(gtagKey).min(1)),
+    extra: z.partialRecord(gtagKey, z.enum(["granted", "denied"])).optional(),
+  })
+  .superRefine((mode: Record<string, unknown>, ctx) => {
+    const owned = new Set<unknown>();
+    const mapping = isObject(mode["mapping"]) ? mode["mapping"] : {};
+    for (const [id, keys] of Object.entries(mapping)) {
+      asArray(keys).forEach((key, i) => {
+        if (owned.has(key)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["mapping", id, i],
+            message: `${String(key)} is mapped more than once; each key belongs to one category.`,
+          });
+        }
+        owned.add(key);
+      });
+    }
+    const extra = isObject(mode["extra"]) ? mode["extra"] : {};
+    for (const key of Object.keys(extra)) {
+      if (owned.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["extra", key],
+          message: `${key} is in mapping; a key is either mapped or in extra, not both.`,
+        });
+      }
+    }
+  }, always);
+
 export const consentConfigSchema = z.strictObject({
   schemaVersion: z.literal(1),
   policyVersion: z.string().min(1).max(32),
@@ -231,10 +278,13 @@ export const consentConfigSchema = z.strictObject({
   validation: z.strictObject({ strictContrast: z.boolean().optional() }).optional(),
   buttons: buttons.optional(),
   record: record.optional(),
+  /** Google Consent Mode v2 adapter (`./gtag`). */
+  consentMode: consentMode.optional(),
   /** Script-gating adapter (`./gate`); default false (plan: Version boundary). */
   gateScripts: z.boolean().optional(),
 });
 
 export type ConsentConfig = z.output<typeof consentConfigSchema>;
+export type GtagConsentKey = (typeof GTAG_CONSENT_KEYS)[number];
 export type LocaleStrings = z.output<typeof localeStrings>;
 export type { ThemeColor };

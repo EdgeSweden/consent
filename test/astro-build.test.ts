@@ -96,7 +96,7 @@ describe.each(["astro-min", "astro"])("astro build with %s", (astroPackage) => {
       () => undefined,
       (e: { stdout: string; stderr: string }) => e.stdout + e.stderr,
     );
-    expect(error).toMatch(/consent\.config\.ts is invalid[\s\S]*consentMode: /);
+    expect(error).toMatch(/consent\.config\.ts is invalid[\s\S]*gpc: /);
     await expect(readdir(join(dir, "dist"))).rejects.toThrow();
   }, 60_000);
 });
