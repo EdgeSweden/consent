@@ -231,6 +231,8 @@ export const consentConfigSchema = z.strictObject({
   validation: z.strictObject({ strictContrast: z.boolean().optional() }).optional(),
   buttons: buttons.optional(),
   record: record.optional(),
+  /** Script-gating adapter (`./gate`); default false (plan: Version boundary). */
+  gateScripts: z.boolean().optional(),
 });
 
 export type ConsentConfig = z.output<typeof consentConfigSchema>;

@@ -4,6 +4,6 @@ import config from "./valid.config.js";
 export default {
   ...config,
   schemaVersion: 2,
-  gateScripts: true,
+  consentMode: { mapping: {} },
   theme: { colors: { background: "#ffffff", text: "#eeeeee" } },
 };

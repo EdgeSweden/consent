@@ -17,7 +17,7 @@ export type ValidationResult =
   | { ok: false; errors: ValidationIssue[]; warnings: ValidationIssue[] };
 
 // Keys that a later version adds (plan: Version boundary).
-const LATER_KEYS: Record<string, string> = { consentMode: "v0.2.0", gateScripts: "v0.2.0" };
+const LATER_KEYS: Record<string, string> = { consentMode: "v0.2.0" };
 
 function formatPath(path: ReadonlyArray<PropertyKey>): string {
   const text = path

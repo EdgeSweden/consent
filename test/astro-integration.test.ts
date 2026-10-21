@@ -93,7 +93,7 @@ describe("consent() Astro integration", () => {
     const { api, error } = await setup("./invalid.config.ts");
     expect(error?.message).toMatch(/invalid\.config\.ts is invalid/);
     expect(error?.message).toMatch(/schemaVersion: /);
-    expect(error?.message).toMatch(/gateScripts: .*v0\.2\.0/);
+    expect(error?.message).toMatch(/consentMode: .*v0\.2\.0/);
     expect(api.injectScript).not.toHaveBeenCalled();
     expect(api.updateConfig).not.toHaveBeenCalled();
     // Warnings are still reported when the config is invalid.

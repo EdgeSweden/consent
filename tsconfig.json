@@ -19,6 +19,7 @@
     // does not depend on a prior `check:build`.
     "paths": {
       "@edgesweden/consent": ["./src/index.ts"],
+      "@edgesweden/consent/gate": ["./src/gate/index.ts"],
       "@edgesweden/consent/astro": ["./src/astro/index.ts"]
     }
   },
