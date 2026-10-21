@@ -86,8 +86,25 @@ describe.each(["astro-min", "astro"])("astro build with %s", (astroPackage) => {
     const js = await readFile(join(dir, "dist", scripts[0]?.[1] ?? ""), "utf8");
     expect(js).toContain("consent-root");
     expect(js).toContain("Accept all");
+    // Neither adapter ships when the config uses neither.
+    expect(js).not.toContain("dataLayer");
+    expect(js).not.toContain("data-consent-type");
     const css = await readdir(join(dir, "dist/_astro"));
     expect(css.some((f) => f.endsWith(".css"))).toBe(true);
+  }, 60_000);
+
+  it("bundles and installs the adapters the config asks for", async () => {
+    const dir = await site(astroPackage, "adapters.config.ts");
+    await build(dir);
+    const html = await readFile(join(dir, "dist/index.html"), "utf8");
+    const scripts = [
+      ...html.matchAll(/<script type="module" src="(\/_astro\/[^"]+\.js)"><\/script>/g),
+    ];
+    expect(scripts).toHaveLength(1);
+    const js = await readFile(join(dir, "dist", scripts[0]?.[1] ?? ""), "utf8");
+    expect(js).toContain("consent-root");
+    expect(js).toContain("dataLayer");
+    expect(js).toContain("data-consent-type");
   }, 60_000);
 
   it("fails on an invalid config", async () => {

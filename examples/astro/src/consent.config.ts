@@ -1,4 +1,5 @@
-// The demo's consent config: blocking with a dimmed backdrop, the defaults (plan: Demo).
+// The demo's consent config: blocking with a dimmed backdrop, the defaults, and both adapters
+// (plan: Demo).
 import type { ConsentConfig, ConsentRecord } from "@edgesweden/consent/astro";
 import { consentStrings } from "./strings.js";
 
@@ -23,6 +24,15 @@ const config: ConsentConfig = {
   ],
   locales: consentStrings,
   record: showRecord,
+  gateScripts: true,
+  consentMode: {
+    mapping: {
+      necessary: ["security_storage"],
+      analytics: ["analytics_storage"],
+      marketing: ["ad_storage", "ad_user_data", "ad_personalization"],
+    },
+    extra: { personalization_storage: "denied" },
+  },
 };
 
 export default config;

@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import consent from "../src/astro/index.js";
-import { PAGE_SCRIPT, STYLE_IMPORT, VIRTUAL_CONFIG } from "../src/astro/integration.js";
+import { pageScript, STYLE_IMPORT, VIRTUAL_CONFIG } from "../src/astro/integration.js";
+import { testConfig } from "./support/config.js";
 
 // Plan: Astro integration. The hook runs against Astro's own Vite, with the Astro API stubbed.
 
@@ -50,19 +51,20 @@ describe("consent() Astro integration", () => {
     expect(error).toBeUndefined();
     expect(api.injectScript.mock.calls).toEqual([
       ["page-ssr", STYLE_IMPORT],
-      ["page", PAGE_SCRIPT],
+      ["page", pageScript(testConfig())],
     ]);
     expect(STYLE_IMPORT).toBe(`import "@edgesweden/consent/styles.css";`);
-    expect(PAGE_SCRIPT).toBe(
-      [
-        `import { mount } from "@edgesweden/consent";`,
-        `import config from "virtual:@edgesweden/consent/config";`,
-        `mount(config);`,
-      ].join("\n"),
-    );
     expect(api.logger.warn).not.toHaveBeenCalled();
   });
 
+  it("generates the page script from the validated config's adapter keys", async () => {
+    const { api, error } = await setup("./adapters.config.ts");
+    expect(error).toBeUndefined();
+    expect(api.injectScript).toHaveBeenCalledWith(
+      "page",
+      pageScript(testConfig({ gateScripts: true, consentMode: { mapping: {} } })),
+    );
+  });
   it("exposes the config module itself through the virtual module", async () => {
     const plugin = only((await setup("./valid.config.ts")).plugin);
     const resolved = only(plugin.resolveId(VIRTUAL_CONFIG));
@@ -123,5 +125,57 @@ describe("consent() Astro integration", () => {
       /broken on purpose/,
     );
     expect(broken.api.injectScript).not.toHaveBeenCalled();
+  });
+});
+
+describe("pageScript", () => {
+  const head = `import { mount } from "@edgesweden/consent";`;
+  const config = `import config from "virtual:@edgesweden/consent/config";`;
+  const gate = `import { installScriptGating } from "@edgesweden/consent/gate";`;
+  const gtag = `import { installConsentMode } from "@edgesweden/consent/gtag";`;
+  const lines = (script: string) => script.split("\n");
+
+  it("imports no adapter when the config uses neither", () => {
+    expect(lines(pageScript(testConfig()))).toEqual([head, config, "mount(config);"]);
+    expect(lines(pageScript(testConfig({ gateScripts: false })))).toEqual([
+      head,
+      config,
+      "mount(config);",
+    ]);
+  });
+
+  it("imports and installs script gating only when gateScripts is true", () => {
+    expect(lines(pageScript(testConfig({ gateScripts: true })))).toEqual([
+      head,
+      gate,
+      config,
+      "mount(config);",
+      "installScriptGating(config);",
+    ]);
+  });
+
+  it("imports and installs Consent Mode only when consentMode is present", () => {
+    const consentMode = { mapping: { analytics: ["analytics_storage" as const] } };
+    expect(lines(pageScript(testConfig({ consentMode })))).toEqual([
+      head,
+      gtag,
+      config,
+      "mount(config);",
+      "installConsentMode(config);",
+    ]);
+  });
+
+  it("installs both after mount, Consent Mode before gating", () => {
+    expect(
+      lines(pageScript(testConfig({ gateScripts: true, consentMode: { mapping: {} } }))),
+    ).toEqual([
+      head,
+      gtag,
+      gate,
+      config,
+      "mount(config);",
+      "installConsentMode(config);",
+      "installScriptGating(config);",
+    ]);
   });
 });
