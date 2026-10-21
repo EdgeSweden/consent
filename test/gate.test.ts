@@ -251,6 +251,7 @@ describe("script gating", () => {
       ["a non-script type", { src: "/first.tpl", "data-consent-type": "text/x-template" }],
       ["text/typescript", { src: "/first.ts", "data-consent-type": "text/typescript" }],
       ["an untrimmed module type", { src: "/first.js", "data-consent-type": " module" }],
+      ["an external nomodule script", { src: "/legacy.js", nomodule: "" }],
       ["an inline classic script", {}],
     ])("does not hold later scripts behind %s", (_, attributes) => {
       gated("necessary", attributes);
@@ -258,6 +259,14 @@ describe("script gating", () => {
       start();
       core.acceptAll();
       expect(runs).toContain("analytics");
+    });
+
+    it("holds later scripts behind a module script marked nomodule", () => {
+      gated("necessary", { src: "/first.js", "data-consent-type": "module", nomodule: "" });
+      gated("analytics");
+      start();
+      core.acceptAll();
+      expect(waiting("analytics")).toHaveLength(1);
     });
 
     it("holds external classic scripts of every JavaScript MIME type", () => {

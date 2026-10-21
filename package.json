@@ -1,6 +1,6 @@
 {
   "name": "@edgesweden/consent",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Config-driven cookie-consent banner for static and server-rendered sites",
   "keywords": [
     "cookie",

@@ -46,13 +46,18 @@ const CLASSIC = new Set(
 /**
  * True when the scripts after `live` must wait for its load or error event, as they would in
  * parsed HTML: an external classic or a module script without `async`. Inline classic scripts run
- * on insertion; any other `type` never loads, so it must not hold the queue.
+ * on insertion; a classic `nomodule` script is skipped by module-aware browsers and any other `type`
+ * never loads, so neither may hold the queue.
  */
 function blocks(live: HTMLScriptElement): boolean {
   if (live.hasAttribute("async")) return false;
   // The browser trims a classic type but not "module".
   if (live.type.toLowerCase() === "module") return true;
-  return CLASSIC.has(live.type.trim().toLowerCase()) && live.hasAttribute("src");
+  return (
+    CLASSIC.has(live.type.trim().toLowerCase()) &&
+    live.hasAttribute("src") &&
+    !live.hasAttribute("nomodule")
+  );
 }
 
 /** Sorts in document order; the browser would run them in that order had they been live. */
