@@ -1,7 +1,8 @@
 name: release
 
-# A version tag on main runs the full CI job, then publishes to npm with provenance through trusted
-# publishing; no token is stored (plan: Releases). docs/releasing.md describes the procedure.
+# A version tag on main runs the full CI job, then stages the package on npm with provenance through
+# trusted publishing; no token is stored, and the version goes live only when a maintainer approves
+# it with 2FA (plan: Releases; decision #41). docs/releasing.md describes the procedure.
 on:
   push:
     tags: ["v*.*.*"]
@@ -42,6 +43,6 @@ jobs:
       - name: check:build
         run: pnpm build
 
-      # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10.
-      - run: npm install --global npm@11
-      - run: npm publish --provenance --access public
+      # Staged publishing needs npm >= 11.15.0; Node 22 ships npm 10.
+      - run: npm install --global npm@^11.15.0
+      - run: npm stage publish --provenance --access public
