@@ -6,6 +6,14 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-21
+
+### Fixed
+
+- Script gating no longer stalls when a granted external classic script has `nomodule`. Browsers
+  that support modules skip such a script without a `load` or `error` event, so every later gated
+  script stayed queued; it no longer holds the queue. A `module` script still does.
+
 ## [0.2.0] - 2026-10-21
 
 ### Added
@@ -50,6 +58,7 @@ First release.
   the entry loads, enforced in CI.
 - Releases are published from a version tag with npm provenance.
 
-[Unreleased]: https://github.com/EdgeSweden/consent/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/EdgeSweden/consent/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/EdgeSweden/consent/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/EdgeSweden/consent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/EdgeSweden/consent/releases/tag/v0.1.0

@@ -148,3 +148,17 @@ test("a gated script of a type the browser does not run holds nothing", async ({
   await page.goto(`${ORIGIN}/`);
   await expect.poll(() => order(page), { timeout: 2000 }).toEqual(["inline necessary"]);
 });
+
+test("an external nomodule script, which the browser skips, holds nothing", async ({ page }) => {
+  await serve(
+    page,
+    page_([
+      '<script type="text/plain" data-consent="necessary" src="/slow.js?legacy" nomodule></script>',
+      inline("necessary", "inline necessary"),
+    ]),
+  );
+  await page.goto(`${ORIGIN}/`);
+  await expect.poll(() => order(page), { timeout: 2000 }).toEqual(["inline necessary"]);
+  await page.waitForTimeout(500);
+  expect(await order(page)).toEqual(["inline necessary"]);
+});
