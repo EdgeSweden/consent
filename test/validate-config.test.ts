@@ -534,6 +534,19 @@ describe("validateConfig", () => {
     });
   });
 
+  describe("gateScripts", () => {
+    it.each([true, false])("accepts %j", (value) => {
+      expectValid(withConfig((c) => (c["gateScripts"] = value)));
+    });
+
+    it.each(["true", 1, null])("rejects %j", (value) => {
+      expectError(
+        withConfig((c) => (c["gateScripts"] = value)),
+        "gateScripts",
+      );
+    });
+  });
+
   describe("unknown keys fail at every level", () => {
     it.each([
       ["(root)", "extra", (c: Json) => (c["extra"] = 1)],
@@ -568,10 +581,10 @@ describe("validateConfig", () => {
       expectError(withConfig(patch), path);
     });
 
-    it.each(["consentMode", "gateScripts"])("names the version that adds %s", (key) => {
-      const result = withConfig((c) => (c[key] = key === "gateScripts" ? true : { mapping: {} }));
-      expectError(result, key);
-      expect(result.errors.find((e) => e.path === key)?.message).toMatch(/v0\.2\.0/);
+    it("names the version that adds consentMode", () => {
+      const result = withConfig((c) => (c["consentMode"] = { mapping: {} }));
+      expectError(result, "consentMode");
+      expect(result.errors.find((e) => e.path === "consentMode")?.message).toMatch(/v0\.2\.0/);
     });
   });
 });

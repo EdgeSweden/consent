@@ -12,6 +12,16 @@ const cspMessage = "Not CSP-clean (plan: CSP).";
 const staticString = (pattern) =>
   `:matches(Literal[value=${pattern}], TemplateLiteral[expressions.length=0][quasis.0.value.cooked=${pattern}])`;
 
+const dependencyBan = (regex) => ({
+  patterns: [
+    {
+      regex,
+      message:
+        "Browser entries have zero runtime dependencies; zod and Astro belong to ./astro only.",
+    },
+  ],
+});
+
 export default tseslint.config(
   {
     ignores: [
@@ -82,18 +92,15 @@ export default tseslint.config(
             "Browser entries have zero runtime dependencies; dynamic imports must be relative.",
         },
       ],
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              regex: "^[^.]",
-              message:
-                "Browser entries have zero runtime dependencies; zod and Astro belong to ./astro only.",
-            },
-          ],
-        },
-      ],
+      "no-restricted-imports": ["error", dependencyBan("^[^.]")],
+    },
+  },
+  {
+    // The adapters reach the core through the package self-reference, so they share its one
+    // consent state (decision #42). It is not a dependency, and only the bare entry is allowed.
+    files: ["src/gate/**/*.ts", "src/gtag/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", dependencyBan("^(?!@edgesweden/consent$)[^.]")],
     },
   },
 );

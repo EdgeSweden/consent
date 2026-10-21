@@ -6,6 +6,13 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Added
+
+- Script gating at `@edgesweden/consent/gate`: `installScriptGating(config)` activates
+  `<script type="text/plain" data-consent="<category>">` elements once their category is granted,
+  or at mount for a required category. Each runs at most once. The `gateScripts` config key
+  (default `false`) is now accepted. Budget: 1 KB gzipped.
+
 ## [0.1.0] - 2026-10-20
 
 First release.

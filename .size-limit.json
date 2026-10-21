@@ -4,5 +4,11 @@
     "path": ["dist/index.js", "dist/styles.css"],
     "limit": "7 KB",
     "gzip": true
+  },
+  {
+    "name": "script gating",
+    "path": ["dist/gate.js"],
+    "limit": "1 KB",
+    "gzip": true
   }
 ]

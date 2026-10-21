@@ -10,7 +10,7 @@ A config-driven cookie-consent banner for static and server-rendered websites.
 - Nothing optional happens before the visitor chooses, and Reject all is as easy as Accept all
 
 The core and stylesheet are under 7 KB gzipped and have no runtime dependencies. Script gating
-and a Google Consent Mode v2 adapter are planned for 0.2.0.
+is a separate entry under 1 KB; a Google Consent Mode v2 adapter is planned for 0.2.0.
 
 ## Install
 
@@ -192,6 +192,7 @@ Schema version 1. Every key is validated and unknown keys fail at every level.
 | `buttons.settings`                      | `true`                                   | show Settings on the first layer                                                                |
 | `buttons.order`                         | `["acceptAll", "rejectAll", "settings"]` | an exact permutation of the shown buttons; `acceptAll` and `rejectAll` can never be left out    |
 | `record`                                | none                                     | a function, a root-relative path (`/…`) or an absolute `http(s)` URL; see Record                |
+| `gateScripts`                           | `false`                                  | a boolean; turns on script gating, see Script gating                                            |
 
 Across the config:
 
@@ -267,6 +268,39 @@ The payload carries no identifier, user agent or page. The request itself still 
 browser attaches (IP address, user agent, referrer, same-origin cookies); what the endpoint does
 with that is up to you. A URL on another origin must be in your CSP `connect-src`.
 
+## Script gating
+
+Mark each script that belongs to a category as inert text with the category id:
+
+```html
+<script type="text/plain" data-consent="analytics" src="/analytics.js"></script>
+<script type="text/plain" data-consent="marketing" data-consent-type="module">
+  import "/pixel.js";
+</script>
+```
+
+Then install the adapter after `mount`:
+
+```ts
+import { mount } from "@edgesweden/consent";
+import { installScriptGating } from "@edgesweden/consent/gate";
+
+mount(config);
+installScriptGating(config);
+```
+
+When a category is granted, each of its scripts is replaced by a live `<script>` with the same
+attributes, text and nonce, minus `type`; `data-consent-type` becomes the live `type`. Scripts run
+one at a time in document order: an external or module script without `async` holds the ones after
+it until it loads or fails, so inline code can depend on it. Scripts of a required category run at
+mount; an optional category's scripts never run before the visitor grants it, and a `data-consent`
+value that names no category never runs. Each script runs at most once. The document is scanned on
+every consent change and on `DOMContentLoaded`; a script added later waits for the next change.
+
+A script that has run cannot be unloaded: after a withdrawal it stays active until the page
+reloads, so reload or tell the visitor if that matters. `installScriptGating` returns a function
+that stops further activation.
+
 ## Content Security Policy
 
 The package works under a strict policy such as
@@ -278,6 +312,10 @@ The package works under a strict policy such as
 - the Astro integration injects a bundled module that Astro's CSP support hashes like any other
   page script, and the stylesheet is a bundled file from your origin;
 - the only request the package can make is to your `record` URL, which you allow-list yourself.
+
+Script gating cannot get around your policy. An activated external script runs only when its host
+is allowed by `script-src`. Activated inline code needs its own hash or a nonce on the gated
+element; without one, it needs `'unsafe-inline'`, which this package never asks for.
 
 ## Versioning
 

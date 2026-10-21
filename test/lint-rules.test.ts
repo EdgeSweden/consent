@@ -69,6 +69,19 @@ describe("browser bundle lint rules", () => {
     expect(await ruleIds(code)).toEqual([]);
   });
 
+  it("lets only the adapters import the core by its package name", async () => {
+    const code = "import { onConsent } from '@edgesweden/consent';\nexport { onConsent };\n";
+    expect(await ruleIds(code, "src/gate/probe.ts")).toEqual([]);
+    expect(await ruleIds(code, "src/gtag/probe.ts")).toEqual([]);
+    expect(await ruleIds(code)).toContain("no-restricted-imports");
+    for (const file of ["src/gate/probe.ts", "src/gtag/probe.ts"]) {
+      expect(await ruleIds("export { z } from 'zod';", file)).toContain("no-restricted-imports");
+      expect(await ruleIds("export { v } from '@edgesweden/consent/astro';", file)).toContain(
+        "no-restricted-imports",
+      );
+    }
+  });
+
   it("leaves non-browser code alone", async () => {
     expect(
       await ruleIds("import { z } from 'zod';\nexport { z };\n", "src/astro/probe.ts"),
