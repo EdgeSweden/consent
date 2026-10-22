@@ -1,5 +1,10 @@
 # @edgesweden/consent
 
+> [!IMPORTANT]
+> This repository is archived. It is superseded by `@edgesweden/consent` 0.3.0, a
+> reimplementation with the same config and cookie contract, developed at
+> [EdgeSweden/theconsent](https://github.com/EdgeSweden/theconsent).
+
 A config-driven cookie-consent banner for static and server-rendered websites.
 
 - Framework-agnostic core in vanilla TypeScript with one stylesheet, exposed as `mount(config)`
